@@ -151,6 +151,12 @@ export function GodraysCanvas() {
         if (typeof layer.angle !== "number") {
           layer.angle = -2.3;
         }
+        if (typeof layer.z !== "number") {
+          layer.z = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.z ?? -1.8;
+        }
+        if (typeof layer.frontZ !== "number") {
+          layer.frontZ = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.frontZ ?? 0.45;
+        }
         if (typeof layer.raySpeed !== "number") {
           layer.raySpeed = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.raySpeed ?? 1.0;
         }
@@ -196,6 +202,12 @@ export function GodraysCanvas() {
         });
         folder.add(layer, "angle", -3.2, 0.8, 0.001).onChange((value: number) => {
           updateLayerOption(layerKey, { angle: value });
+        });
+        folder.add(layer, "z", -6, 2, 0.01).name("back z").onChange((value: number) => {
+          updateLayerOption(layerKey, { z: value });
+        });
+        folder.add(layer, "frontZ", -2, 4, 0.01).name("front z").onChange((value: number) => {
+          updateLayerOption(layerKey, { frontZ: value });
         });
         folder.add(uiState, "originX", -2, 3, 0.01).onChange((value: number) => {
           updateLayerOption(layerKey, { origin: new Vector2(value, uiState.originY) });
