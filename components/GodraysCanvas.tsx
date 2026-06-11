@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import GUI from "lil-gui";
 import Stats from "stats.js";
 import { Vector2, Vector3 } from "three";
@@ -35,10 +35,6 @@ const hexToVector3 = (hex: string): Vector3 => {
 
 export function GodraysCanvas() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [heroText, setHeroText] = useState({
-    color: "#EB6137",
-    visible: true,
-  });
 
   useEffect(() => {
     const mount = containerRef.current;
@@ -68,7 +64,7 @@ export function GodraysCanvas() {
       stats.dom.style.zIndex = "20";
       document.body.appendChild(stats.dom);
 
-      gui = new GUI({ title: "Three.js Background Godrays" });
+      gui = new GUI({ title: "Three.js Hero God Rays" });
 
       const backgroundFolder = gui.addFolder("Background");
       backgroundFolder
@@ -104,22 +100,19 @@ export function GodraysCanvas() {
         });
       });
 
-      const textState = {
+      const textState = options.heroText ?? {
         color: "#EB6137",
+        fontFamily: "Humane-Regular",
+        text: "HERO GOD RAYS",
         visible: true,
       };
+      options.heroText = textState;
       const textFolder = gui.addFolder("Text");
       textFolder.add(textState, "visible").name("visible").onChange((value: boolean) => {
-        setHeroText((current) => ({
-          ...current,
-          visible: value,
-        }));
+        godrays.updateOptions({ heroText: { visible: value } });
       });
       textFolder.addColor(textState, "color").name("color").onChange((value: string) => {
-        setHeroText((current) => ({
-          ...current,
-          color: value,
-        }));
+        godrays.updateOptions({ heroText: { color: value } });
       });
 
       const updateLayerOption = (
@@ -276,17 +269,5 @@ export function GodraysCanvas() {
     };
   }, []);
 
-  return (
-    <div ref={containerRef} className="fixed inset-0 h-screen w-screen overflow-hidden">
-      <h1
-        className="hero-godrays-title"
-        style={{
-          color: heroText.color,
-          opacity: heroText.visible ? 1 : 0,
-        }}
-      >
-        HERO GOD RAYS
-      </h1>
-    </div>
-  );
+  return <div ref={containerRef} className="fixed inset-0 h-screen w-screen overflow-hidden" />;
 }

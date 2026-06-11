@@ -11,6 +11,13 @@ export interface GodraysModelOptions {
   visible: boolean;
 }
 
+export interface GodraysHeroTextOptions {
+  color: string;
+  fontFamily: string;
+  text: string;
+  visible: boolean;
+}
+
 export interface GodRaysOptions {
   angle?: number;
   color?: Vector3;
@@ -37,6 +44,7 @@ export interface GodraysSceneOptions {
   backgroundLayer: GodRaysOptions;
   foregroundLayer: GodRaysOptions;
   model?: GodraysModelOptions;
+  heroText?: GodraysHeroTextOptions;
 }
 
 export interface GodraysOptionsPatch {
@@ -44,6 +52,7 @@ export interface GodraysOptionsPatch {
   backgroundLayer?: GodRaysOptions;
   foregroundLayer?: GodRaysOptions;
   model?: Partial<GodraysModelOptions>;
+  heroText?: Partial<GodraysHeroTextOptions>;
 }
 
 const DEFAULT_RAY_ANGLE = -2.3;
@@ -52,7 +61,7 @@ const DEFAULT_RAY_ORIGIN = new Vector2(1.48, 1.86);
 export const DEFAULT_GODRAYS_OPTIONS: GodraysSceneOptions = {
   background: {
     transparent: false,
-    color: "#0D1321",
+    color: "#0a0d15",
   },
   backgroundLayer: {
     color: new Vector3(0.612, 0.639, 0.651),
@@ -95,6 +104,12 @@ export const DEFAULT_GODRAYS_OPTIONS: GodraysSceneOptions = {
   model: {
     visible: true,
   },
+  heroText: {
+    color: "#EB6137",
+    fontFamily: "Humane-Regular",
+    text: "HERO GOD RAYS",
+    visible: true,
+  },
 };
 
 export const createDefaultGodraysOptions = (): GodraysSceneOptions => ({
@@ -112,4 +127,10 @@ export const createDefaultGodraysOptions = (): GodraysSceneOptions => ({
     origin: DEFAULT_RAY_ORIGIN.clone(),
   },
   model: { ...(DEFAULT_GODRAYS_OPTIONS.model ?? { visible: true }) },
+  heroText: { ...(DEFAULT_GODRAYS_OPTIONS.heroText ?? {
+    color: "#EB6137",
+    fontFamily: "Humane-Regular",
+    text: "HERO GOD RAYS",
+    visible: true,
+  }) },
 });

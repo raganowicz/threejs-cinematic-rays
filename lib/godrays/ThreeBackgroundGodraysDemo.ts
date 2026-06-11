@@ -2,6 +2,8 @@ import {
   ACESFilmicToneMapping,
   AddEquation,
   AmbientLight,
+  BackSide,
+  CanvasTexture,
   Clock,
   Color,
   CubeCamera,
@@ -9,12 +11,15 @@ import {
   HemisphereLight,
   LinearFilter,
   Mesh,
+  MeshBasicMaterial,
   MeshPhysicalMaterial,
   OneFactor,
   PerspectiveCamera,
   PlaneGeometry,
   Scene,
   ShaderMaterial,
+  SRGBColorSpace,
+  SphereGeometry,
   SrcAlphaFactor,
   TorusKnotGeometry,
   Vector2,
@@ -26,6 +31,7 @@ import {
 import {
   DEFAULT_GODRAYS_OPTIONS,
   type GodRaysOptions,
+  type GodraysHeroTextOptions,
   type GodraysOptionsPatch,
   type GodraysSceneOptions,
 } from "./types";
@@ -368,6 +374,14 @@ export class ThreeBackgroundGodraysDemo {
   private readonly raySheets: SpatialGodRays;
   private readonly ambientLight = new AmbientLight(0xd8e5f6, 1.18);
   private readonly hemisphereLight = new HemisphereLight(0xf4f8ff, 0x27354a, 0.92);
+  private readonly backdropGeometry = new SphereGeometry(60, 32, 16);
+  private readonly backdropMaterial = new MeshBasicMaterial({
+    color: new Color(DEFAULT_GODRAYS_OPTIONS.background.color),
+    side: BackSide,
+    depthWrite: false,
+    toneMapped: false,
+  });
+  private readonly backdropMesh = new Mesh(this.backdropGeometry, this.backdropMaterial);
   private readonly reflectionTarget = new WebGLCubeRenderTarget(256, {
     generateMipmaps: true,
     minFilter: LinearFilter,
@@ -375,6 +389,16 @@ export class ThreeBackgroundGodraysDemo {
   });
   private readonly reflectionCamera = new CubeCamera(0.1, 30, this.reflectionTarget);
   private readonly demoKnot: Mesh<TorusKnotGeometry, MeshPhysicalMaterial>;
+  private readonly heroTextGeometry = new PlaneGeometry(11.2, 2.72);
+  private readonly heroTextMaterial = new MeshBasicMaterial({
+    transparent: true,
+    depthTest: true,
+    depthWrite: false,
+    toneMapped: false,
+  });
+  private readonly heroTextMesh = new Mesh(this.heroTextGeometry, this.heroTextMaterial);
+  private heroTextTexture?: CanvasTexture;
+  private heroTextFontRefreshId = 0;
   private options: GodraysSceneOptions;
 
   constructor(config: ThreeBackgroundGodraysDemoConfig) {
@@ -394,6 +418,15 @@ export class ThreeBackgroundGodraysDemo {
       model: {
         ...(DEFAULT_GODRAYS_OPTIONS.model ?? { visible: true }),
         ...config.options?.model,
+      },
+      heroText: {
+        ...(DEFAULT_GODRAYS_OPTIONS.heroText ?? {
+          color: "#EB6137",
+          fontFamily: "Humane-Regular",
+          text: "HERO GOD RAYS",
+          visible: true,
+        }),
+        ...config.options?.heroText,
       },
     };
 
@@ -415,28 +448,29 @@ export class ThreeBackgroundGodraysDemo {
 
     this.raySheets = new SpatialGodRays(this.options.backgroundLayer);
     const knotMaterial = new MeshPhysicalMaterial({
-      color: new Color("#f8fbff"),
-      emissive: new Color("#0b1220"),
-      emissiveIntensity: 0.015,
+      color: new Color("#ffffff"),
       metalness: 1,
-      roughness: 0.018,
-      clearcoat: 1,
-      clearcoatRoughness: 0.018,
+      roughness: 0.006,
+      envMapIntensity: 1,
       envMap: this.reflectionTarget.texture,
-      envMapIntensity: 0.98,
     });
-    this.demoKnot = new Mesh(new TorusKnotGeometry(0.42, 0.13, 180, 24), knotMaterial);
+    this.demoKnot = new Mesh(new TorusKnotGeometry(0.5, 0.13, 180, 24), knotMaterial);
     this.demoKnot.geometry.center();
-    this.demoKnot.scale.setScalar(1.1);
+    this.demoKnot.scale.setScalar(0.8);
     this.demoKnot.position.set(0, 0, 0);
     this.demoKnot.visible = this.options.model?.visible ?? true;
     this.demoKnot.renderOrder = 1;
+    this.heroTextMesh.position.set(0, -0.02, -1.15);
+    this.heroTextMesh.renderOrder = 0;
+    this.applyHeroText();
 
+    this.scene.add(this.backdropMesh);
     for (const sheet of this.raySheets.meshes) {
       this.scene.add(sheet);
     }
     this.scene.add(this.ambientLight);
     this.scene.add(this.hemisphereLight);
+    this.scene.add(this.heroTextMesh);
     this.scene.add(this.demoKnot);
     this.scene.add(this.reflectionCamera);
 
@@ -492,31 +526,111 @@ export class ThreeBackgroundGodraysDemo {
       };
       this.demoKnot.visible = this.options.model.visible ?? true;
     }
+
+    if (options.heroText) {
+      const heroTextOptions = this.options.heroText ?? DEFAULT_GODRAYS_OPTIONS.heroText;
+      this.options.heroText = {
+        ...heroTextOptions,
+        ...options.heroText,
+      } as GodraysHeroTextOptions;
+      this.applyHeroText();
+    }
   }
 
   dispose(): void {
     this.raySheets.dispose();
     this.reflectionTarget.dispose();
+    this.backdropGeometry.dispose();
+    this.backdropMaterial.dispose();
     this.demoKnot.geometry.dispose();
     this.demoKnot.material.dispose();
+    this.heroTextTexture?.dispose();
+    this.heroTextGeometry.dispose();
+    this.heroTextMaterial.dispose();
     this.renderer.dispose();
     this.renderer.domElement.remove();
   }
 
+  private applyHeroText(): void {
+    const textOptions = this.options.heroText ?? DEFAULT_GODRAYS_OPTIONS.heroText;
+
+    if (!textOptions) {
+      this.heroTextMesh.visible = false;
+      return;
+    }
+
+    this.heroTextMesh.visible = textOptions.visible;
+    this.updateHeroTextTexture(textOptions);
+
+    const fontSet = document.fonts;
+    if (fontSet) {
+      const refreshId = ++this.heroTextFontRefreshId;
+      fontSet.load(`400 664px "${textOptions.fontFamily}"`).then(() => {
+        const latestTextOptions = this.options.heroText ?? DEFAULT_GODRAYS_OPTIONS.heroText;
+
+        if (latestTextOptions && refreshId === this.heroTextFontRefreshId) {
+          this.updateHeroTextTexture(latestTextOptions);
+        }
+      });
+    }
+  }
+
+  private updateHeroTextTexture(options: GodraysHeroTextOptions): void {
+    this.heroTextTexture?.dispose();
+    this.heroTextTexture = this.createHeroTextTexture(options);
+    this.heroTextMaterial.map = this.heroTextTexture;
+    this.heroTextMaterial.needsUpdate = true;
+  }
+
+  private createHeroTextTexture(options: GodraysHeroTextOptions): CanvasTexture {
+    const canvas = document.createElement("canvas");
+    const width = 4096;
+    const height = 1024;
+    const context = canvas.getContext("2d");
+
+    canvas.width = width;
+    canvas.height = height;
+
+    if (!context) {
+      return new CanvasTexture(canvas);
+    }
+
+    context.clearRect(0, 0, width, height);
+    context.fillStyle = options.color;
+    context.font = `400 664px "${options.fontFamily}"`;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(options.text, width / 2, height / 2 + 48);
+
+    const texture = new CanvasTexture(canvas);
+    texture.colorSpace = SRGBColorSpace;
+    texture.needsUpdate = true;
+
+    return texture;
+  }
+
   private updateDynamicReflection(): void {
     const modelVisible = this.demoKnot.visible;
+    const heroTextVisible = this.heroTextMesh.visible;
 
     this.demoKnot.visible = false;
+    this.heroTextMesh.visible = false;
     this.reflectionCamera.position.copy(this.demoKnot.position);
     this.reflectionCamera.update(this.renderer, this.scene);
     this.demoKnot.visible = modelVisible;
+    this.heroTextMesh.visible = heroTextVisible;
   }
 
   private applyBackground(): void {
     if (this.options.background.transparent) {
+      this.scene.background = null;
+      this.backdropMesh.visible = false;
       this.renderer.setClearColor(0x000000, 0);
     } else {
       const color = new Color(this.options.background.color);
+      this.scene.background = color;
+      this.backdropMaterial.color.copy(color);
+      this.backdropMesh.visible = true;
       this.renderer.setClearColor(color, 1);
     }
   }

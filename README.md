@@ -125,6 +125,8 @@ Use `ThreeBackgroundGodrays` instead if you only need a full-screen background/f
 
 The reusable 3D class is `SpatialGodRays`. It does not create a renderer or camera; it only owns the ray meshes and exposes `update(delta)`, `resize(camera, width, height)`, `applyOptions(options)`, and `dispose()`. All visual controls live in one options object.
 
+The demo title is rendered inside Three.js as a canvas-textured plane behind the chrome model, not as a DOM overlay. It is excluded from the chrome reflection pass and defaults to `fontFamily: "Humane-Regular"`. The demo registers `Humane-Regular` from `public/webfonts`.
+
 ---
 
 ## Compared To `three-good-godrays`
@@ -166,6 +168,15 @@ Use this project for controllable visual mood and product/landing-page art direc
 | `rayThickness` | `number` | `0.32` | Beam width. Very low values plus high `beamFocus` create laser-like lines. |
 | `beamFocus` | `number` | `1.0` | Beam sharpness. Higher means thinner, more focused beams. |
 | `raySeed` | `number` | random | Per-layer randomization seed. |
+
+Hero text options:
+
+| Option | Type | Default | Description |
+| --- | --- | ---: | --- |
+| `heroText.visible` | `boolean` | `true` | Shows/hides the Three.js text plane. |
+| `heroText.text` | `string` | `"HERO GOD RAYS"` | Text rendered into the canvas texture. |
+| `heroText.color` | `string` | `"#EB6137"` | Text color. |
+| `heroText.fontFamily` | `string` | `"Humane-Regular"` | CSS font-family used by the canvas texture. Not exposed in the demo GUI. |
 
 Useful presets:
 
