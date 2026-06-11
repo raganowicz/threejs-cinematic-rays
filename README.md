@@ -1,36 +1,127 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Three.js Background Godrays
 
-## Getting Started
+Reusable, modular **pure three.js** godrays snippet for:
 
-First, run the development server:
+- animated rays in the **background**,
+- animated rays in the **foreground**,
+- independent on/off for each layer,
+- transparent or solid-color background.
+
+No `@react-three/fiber`, no `drei`.
+
+Shader and blend behavior are ported from the Olympic implementation.
+
+---
+
+## Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open: [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Debug Mode (GUI + Performance)
 
-## Learn More
+Open app with:
 
-To learn more about Next.js, take a look at the following resources:
+```text
+http://localhost:3000/#debug
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+This enables:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `lil-gui` controls,
+- `stats.js` performance panel.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+lib/godrays/
+  shaders.ts                # GLSL shaders
+  GodraysLayer.ts           # Single full-screen godrays layer
+  ThreeBackgroundGodrays.ts # Main reusable class (pure three.js)
+  types.ts                  # Options and defaults
+  index.ts                  # Public exports
+
+components/
+  GodraysCanvas.tsx         # Demo canvas + optional #debug controls
+```
+
+---
+
+## Quick Use In Your Own Project
+
+1. Copy `lib/godrays/*` into your project.
+2. Install dependencies:
+
+```bash
+pnpm add three
+pnpm add lil-gui stats.js
+```
+
+3. Create instance and render in your own animation loop:
+
+```ts
+import {
+  DEFAULT_GODRAYS_OPTIONS,
+  ThreeBackgroundGodrays,
+} from "./lib/godrays";
+
+const mount = document.getElementById("canvas-root")!;
+
+const godrays = new ThreeBackgroundGodrays({
+  mount,
+  options: {
+    ...DEFAULT_GODRAYS_OPTIONS,
+    background: {
+      transparent: false,
+      color: "#020712",
+    },
+  },
+});
+
+function tick(t: number) {
+  godrays.render(t * 0.001);
+  requestAnimationFrame(tick);
+}
+
+requestAnimationFrame(tick);
+window.addEventListener("resize", () => {
+  godrays.setSize(mount.clientWidth, mount.clientHeight);
+});
+```
+
+---
+
+## Main Options
+
+- `background.transparent` - `true`/`false`
+- `background.color` - clear color when not transparent
+- `backgroundLayer.visible` - show/hide background rays
+- `foregroundLayer.visible` - show/hide foreground rays
+- each layer also has: `color (Vector3)`, `opacity`, `intensity`, `angle`, `origin (Vector2)`, `z`
+
+---
+
+## Screenshots
+
+> Add your screenshots below
+
+- `![Default view](./public/screenshots/default.png)`
+- `![Debug view](./public/screenshots/debug.png)`
+
+---
+
+## Dependencies
+
+- `three`
+- `lil-gui`
+- `stats.js`
+
+(This demo runs in Next.js, but the core godrays module is pure three.js and can be reused outside Next.js.)

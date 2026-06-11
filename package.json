@@ -1,5 +1,5 @@
 {
-  "name": "rm-godrays",
+  "name": "threejs-background-godrays",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,15 +9,20 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "lil-gui": "^0.20.0",
     "next": "16.2.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "stats.js": "^0.17.0",
+    "three": "^0.181.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/stats.js": "^0.17.4",
+    "@types/three": "^0.181.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
