@@ -105,7 +105,17 @@ window.addEventListener("resize", () => {
 - `background.color` - clear color when not transparent
 - `backgroundLayer.visible` - show/hide background rays
 - `foregroundLayer.visible` - show/hide foreground rays
-- each layer also has: `color (Vector3)`, `opacity`, `intensity`, `angle`, `origin (Vector2)`, `z`
+- each layer also has:
+  - `color` (Vector3) - ray color
+  - `opacity` - layer opacity (0-1)
+  - `intensity` - light intensity
+  - `angle` - ray direction angle
+  - `origin` (Vector2) - light source position
+  - `z` - layer depth
+  - `raySpeed` - animation speed multiplier (default: 1.0)
+  - `beamFocus` - beam sharpness, higher = more laser-like (default: 1.0)
+  - `raySpread` - how spread out rays are (default: 1.0)
+  - `rayCount` - number of ray beams, 1-32 (default: 8)
 
 ---
 
@@ -125,3 +135,33 @@ window.addEventListener("resize", () => {
 - `stats.js`
 
 (This demo runs in Next.js, but the core godrays module is pure three.js and can be reused outside Next.js.)
+
+---
+
+## License
+
+MIT License
+
+Copyright (c) 2024 Rafał Raganowicz
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+**Attribution requirement:** When using this software in any project (including
+commercial projects), please credit the original author (Rafał Raganowicz) in
+your project documentation, README, or credits section.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

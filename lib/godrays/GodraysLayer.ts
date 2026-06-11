@@ -33,6 +33,11 @@ export class GodRays {
       origin = new Vector2(1.48, 1.86),
       visible = true,
       z = 0,
+      raySpeed = 1.0,
+      beamFocus = 1.0,
+      raySpread = 1.0,
+      rayCount = 8,
+      raySeed = Math.random() * 1000,
     } = options;
 
     this.material = new ShaderMaterial({
@@ -47,6 +52,11 @@ export class GodRays {
         uBgColor: { value: new Vector3(0.118, 0.133, 0.149) },
         uOrigin: { value: origin },
         uAngle: { value: angle },
+        uRaySpeed: { value: raySpeed },
+        uBeamFocus: { value: beamFocus },
+        uRaySpread: { value: raySpread },
+        uRayCount: { value: rayCount },
+        uRaySeed: { value: raySeed },
       },
       transparent: true,
       depthTest: false,
@@ -92,6 +102,30 @@ export class GodRays {
 
   setOrigin(x: number, y: number): void {
     this.material.uniforms.uOrigin.value.set(x, y);
+  }
+
+  setColor(color: Vector3): void {
+    this.material.uniforms.uColor.value.copy(color);
+  }
+
+  setRaySpeed(speed: number): void {
+    this.material.uniforms.uRaySpeed.value = speed;
+  }
+
+  setBeamFocus(focus: number): void {
+    this.material.uniforms.uBeamFocus.value = focus;
+  }
+
+  setRaySpread(spread: number): void {
+    this.material.uniforms.uRaySpread.value = spread;
+  }
+
+  setRayCount(count: number): void {
+    this.material.uniforms.uRayCount.value = Math.floor(Math.max(1, Math.min(32, count)));
+  }
+
+  setRaySeed(seed: number): void {
+    this.material.uniforms.uRaySeed.value = seed;
   }
 
   resize(camera: PerspectiveCamera, width: number, height: number): void {

@@ -125,6 +125,18 @@ export function GodraysCanvas() {
         if (typeof layer.angle !== "number") {
           layer.angle = -2.3;
         }
+        if (typeof layer.raySpeed !== "number") {
+          layer.raySpeed = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.raySpeed ?? 1.0;
+        }
+        if (typeof layer.beamFocus !== "number") {
+          layer.beamFocus = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.beamFocus ?? 1.0;
+        }
+        if (typeof layer.raySpread !== "number") {
+          layer.raySpread = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.raySpread ?? 1.0;
+        }
+        if (typeof layer.rayCount !== "number") {
+          layer.rayCount = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayCount ?? 8;
+        }
 
         folder.add(layer, "visible").onChange((value: boolean) => {
           updateLayerOption(layerKey, { visible: value });
@@ -146,6 +158,18 @@ export function GodraysCanvas() {
         });
         folder.add(uiState, "originY", -2, 3, 0.01).onChange((value: number) => {
           updateLayerOption(layerKey, { origin: new Vector2(uiState.originX, value) });
+        });
+        folder.add(layer, "raySpeed", 0.1, 3, 0.01).name("ray speed").onChange((value: number) => {
+          updateLayerOption(layerKey, { raySpeed: value });
+        });
+        folder.add(layer, "beamFocus", 0.2, 3, 0.01).name("beam focus").onChange((value: number) => {
+          updateLayerOption(layerKey, { beamFocus: value });
+        });
+        folder.add(layer, "raySpread", 0.2, 3, 0.01).name("ray spread").onChange((value: number) => {
+          updateLayerOption(layerKey, { raySpread: value });
+        });
+        folder.add(layer, "rayCount", 1, 32, 1).name("ray count").onChange((value: number) => {
+          updateLayerOption(layerKey, { rayCount: value });
         });
       };
 

@@ -157,6 +157,26 @@ export class ThreeBackgroundGodrays {
       layer.setOrigin(patch.origin.x, patch.origin.y);
     }
 
+    if (patch.color) {
+      layer.setColor(patch.color);
+    }
+
+    if (typeof patch.raySpeed === "number") {
+      layer.setRaySpeed(patch.raySpeed);
+    }
+
+    if (typeof patch.beamFocus === "number") {
+      layer.setBeamFocus(patch.beamFocus);
+    }
+
+    if (typeof patch.raySpread === "number") {
+      layer.setRaySpread(patch.raySpread);
+    }
+
+    if (typeof patch.rayCount === "number") {
+      layer.setRayCount(patch.rayCount);
+    }
+
     if (typeof patch.z === "number") {
       layer.mesh.position.z = patch.z;
     }

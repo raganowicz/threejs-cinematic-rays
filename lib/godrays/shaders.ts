@@ -20,6 +20,11 @@ uniform vec3  uColor;
 uniform vec3  uBgColor;
 uniform vec2  uOrigin;
 uniform float uAngle;
+uniform float uRaySpeed;
+uniform float uBeamFocus;
+uniform float uRaySpread;
+uniform int uRayCount;
+uniform float uRaySeed;
 
 float hash(float n) {
   return fract(sin(n) * 43758.5453123);
@@ -40,7 +45,8 @@ float dither(vec2 p) {
 void main() {
   float aspect = uResolution.x / uResolution.y;
   vec2 uv = vUv;
-  float t = uTime * 0.62;
+  float t = (uTime + uRaySeed * 0.37) * 0.62 * uRaySpeed;
+  float beamAA = 1.2 / max(uResolution.y, 1.0);
 
   vec2 p = vec2((uv.x - 0.5) * aspect, uv.y - 0.5);
   vec2 o = vec2((uOrigin.x - 0.5) * aspect, uOrigin.y - 0.5);
@@ -66,23 +72,25 @@ void main() {
 
   float shafts = 0.0;
 
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 32; i++) {
+    if (i >= uRayCount) break;
     float fi = float(i);
-    float seed = hash(fi * 7.137 + 2.41);
-    float speedSeed = hash(fi * 2.91 + 6.0);
-    float layer = mix(0.72, 1.34, hash(fi * 6.11 + 4.2));
+    float seed = hash(fi * 7.137 + 2.41 + uRaySeed * 0.71);
+    float speedSeed = hash(fi * 2.91 + 6.0 + uRaySeed * 0.43);
+    float layer = mix(0.72, 1.34, hash(fi * 6.11 + 4.2 + uRaySeed * 0.29));
     float sweep = fract(seed + t * mix(0.006, 0.026, speedSeed) * layer);
-    float angleOffset = mix(-0.48, 0.36, sweep);
+    float angleOffset = mix(-0.48 * uRaySpread, 0.36 * uRaySpread, sweep);
     float wrapFade = smoothstep(-0.48, -0.36, angleOffset) * (1.0 - smoothstep(0.24, 0.36, angleOffset));
-    float width = mix(0.009, 0.032, hash(fi * 3.71 + 8.0));
-    float microSpread = mix(-0.024, 0.024, hash(fi * 9.7 + 0.8));
+    float baseWidth = mix(0.009, 0.032, hash(fi * 3.71 + 8.0 + uRaySeed * 0.17));
+    float width = max(baseWidth / uBeamFocus, 0.008);
+    float microSpread = mix(-0.024, 0.024, hash(fi * 9.7 + 0.8 + uRaySeed * 0.31));
     float beamAngle = uAngle + angleOffset + microSpread;
     float angleDelta = angularDistance(pointAngle, beamAngle);
     float localDepth = sourceDistance * cos(angleDelta);
 
-    float distanceToBeam = angleDelta / width;
+    float distanceToBeam = angleDelta / (width + beamAA);
     float beam = exp(-distanceToBeam * distanceToBeam);
-    float companionSeed = hash(fi * 10.13 + 2.6);
+    float companionSeed = hash(fi * 10.13 + 2.6 + uRaySeed * 0.59);
     float companionAngle = angleOffset + mix(-0.08, 0.08, companionSeed);
     float companionDistance = angularDistance(pointAngle, uAngle + companionAngle) / (width * mix(0.55, 0.9, companionSeed));
     float companion = exp(-companionDistance * companionDistance) * smoothstep(0.58, 0.98, companionSeed) * 0.22;
@@ -92,7 +100,7 @@ void main() {
     float localEntryFade = smoothstep(-0.12, 0.25, localDepth);
     float rayFalloff = exp(-max(localDepth - 1.85, 0.0) * mix(0.44, 0.68, seed));
     float pulse = 0.9 + 0.1 * sin(t * (0.1 + seed * 0.12) + fi * 1.9);
-    float rayStrength = mix(0.12, 0.58, hash(fi * 5.33 + 3.3));
+    float rayStrength = mix(0.12, 0.58, hash(fi * 5.33 + 3.3 + uRaySeed * 0.23));
 
     shafts += beam * wrapFade * softness * localEntryFade * floorFade * rayFalloff * pulse * rayStrength;
   }
@@ -105,7 +113,8 @@ void main() {
   float totalLight = (atmosphere + bloom) * uIntensity;
 
   vec3 col = uBgColor + uColor * totalLight;
-  col += (dither(gl_FragCoord.xy) - 0.5) / 255.0;
+  float grain = dither(gl_FragCoord.xy + vec2(t * 43.0, t * 37.0));
+  col += (grain - 0.5) / 192.0;
 
   vec3 lightDelta = max(clamp(col, 0.0, 1.0) - uBgColor, 0.0);
   gl_FragColor = vec4(lightDelta, uOpacity);
