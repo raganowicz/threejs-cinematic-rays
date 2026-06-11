@@ -7,7 +7,7 @@ import { Vector2, Vector3 } from "three";
 import {
   createDefaultGodraysOptions,
   DEFAULT_GODRAYS_OPTIONS,
-  ThreeBackgroundGodrays,
+  ThreeBackgroundGodraysDemo,
   type GodraysSceneOptions,
 } from "@/lib/godrays";
 
@@ -44,7 +44,7 @@ export function GodraysCanvas() {
     }
 
     const options: GodraysSceneOptions = createDefaultGodraysOptions();
-    const godrays = new ThreeBackgroundGodrays({ mount, options });
+    const godrays = new ThreeBackgroundGodraysDemo({ mount, options });
     const debugMode = window.location.hash.includes("debug");
 
     let stats: Stats | null = null;
@@ -89,6 +89,17 @@ export function GodraysCanvas() {
           });
         });
 
+      const modelState = options.model ?? { visible: true };
+      options.model = modelState;
+      const modelFolder = gui.addFolder("Model");
+      modelFolder.add(modelState, "visible").name("visible").onChange((value: boolean) => {
+        godrays.updateOptions({
+          model: {
+            visible: value,
+          },
+        });
+      });
+
       const updateLayerOption = (
         layerKey: "backgroundLayer" | "foregroundLayer",
         patch: Partial<NonNullable<GodraysSceneOptions["backgroundLayer"]>>,
@@ -128,11 +139,23 @@ export function GodraysCanvas() {
         if (typeof layer.raySpeed !== "number") {
           layer.raySpeed = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.raySpeed ?? 1.0;
         }
+        if (typeof layer.rayDirection !== "number") {
+          layer.rayDirection = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayDirection ?? -1;
+        }
+        if (typeof layer.rayMotion !== "number") {
+          layer.rayMotion = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayMotion ?? 2;
+        }
+        if (typeof layer.rayDepthMode !== "number") {
+          layer.rayDepthMode = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayDepthMode ?? 2;
+        }
         if (typeof layer.beamFocus !== "number") {
           layer.beamFocus = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.beamFocus ?? 1.0;
         }
         if (typeof layer.raySpread !== "number") {
           layer.raySpread = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.raySpread ?? 1.0;
+        }
+        if (typeof layer.rayThickness !== "number") {
+          layer.rayThickness = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayThickness ?? 1.0;
         }
         if (typeof layer.rayCount !== "number") {
           layer.rayCount = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayCount ?? 8;
@@ -162,19 +185,42 @@ export function GodraysCanvas() {
         folder.add(layer, "raySpeed", 0.1, 3, 0.01).name("ray speed").onChange((value: number) => {
           updateLayerOption(layerKey, { raySpeed: value });
         });
-        folder.add(layer, "beamFocus", 0.2, 3, 0.01).name("beam focus").onChange((value: number) => {
+        folder
+          .add(layer, "rayMotion", {
+            "linear top to bottom": 0,
+            "linear bottom to top": 1,
+            "orbit clockwise": 2,
+            "orbit counterclockwise": 3,
+          })
+          .name("ray motion")
+          .onChange((value: number) => {
+            updateLayerOption(layerKey, { rayMotion: Number(value) });
+          });
+        folder
+          .add(layer, "rayDepthMode", {
+            "behind model": 0,
+            "in front of model": 1,
+            "behind and in front": 2,
+          })
+          .name("ray depth")
+          .onChange((value: number) => {
+            updateLayerOption(layerKey, { rayDepthMode: Number(value) });
+          });
+        folder.add(layer, "beamFocus", 0.05, 16, 0.01).name("beam focus").onChange((value: number) => {
           updateLayerOption(layerKey, { beamFocus: value });
         });
         folder.add(layer, "raySpread", 0.2, 3, 0.01).name("ray spread").onChange((value: number) => {
           updateLayerOption(layerKey, { raySpread: value });
+        });
+        folder.add(layer, "rayThickness", 0.005, 4, 0.001).name("ray thickness").onChange((value: number) => {
+          updateLayerOption(layerKey, { rayThickness: value });
         });
         folder.add(layer, "rayCount", 1, 32, 1).name("ray count").onChange((value: number) => {
           updateLayerOption(layerKey, { rayCount: value });
         });
       };
 
-      bindLayerControls("Background Rays", "backgroundLayer");
-      bindLayerControls("Foreground Rays", "foregroundLayer");
+      bindLayerControls("Light Rays", "backgroundLayer");
     }
 
     const animate = () => {
@@ -196,5 +242,5 @@ export function GodraysCanvas() {
     };
   }, []);
 
-  return <div ref={containerRef} className="h-screen w-screen" />;
+  return <div ref={containerRef} className="fixed inset-0 h-screen w-screen overflow-hidden" />;
 }

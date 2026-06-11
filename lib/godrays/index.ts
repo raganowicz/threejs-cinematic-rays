@@ -1,4 +1,5 @@
 export { ThreeBackgroundGodrays } from "./ThreeBackgroundGodrays";
+export { SpatialGodRays, ThreeBackgroundGodraysDemo } from "./ThreeBackgroundGodraysDemo";
 export { GodRays } from "./GodraysLayer";
 export {
   createDefaultGodraysOptions,

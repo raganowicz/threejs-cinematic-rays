@@ -21,8 +21,10 @@ uniform vec3  uBgColor;
 uniform vec2  uOrigin;
 uniform float uAngle;
 uniform float uRaySpeed;
+uniform float uRayDirection;
 uniform float uBeamFocus;
 uniform float uRaySpread;
+uniform float uRayThickness;
 uniform int uRayCount;
 uniform float uRaySeed;
 
@@ -30,7 +32,7 @@ float hash(float n) {
   return fract(sin(n) * 43758.5453123);
 }
 
-float saturate(float value) {
+float clamp01(float value) {
   return clamp(value, 0.0, 1.0);
 }
 
@@ -45,7 +47,7 @@ float dither(vec2 p) {
 void main() {
   float aspect = uResolution.x / uResolution.y;
   vec2 uv = vUv;
-  float t = (uTime + uRaySeed * 0.37) * 0.62 * uRaySpeed;
+  float t = (uTime + uRaySeed * 0.37) * uRaySpeed * uRayDirection;
   float beamAA = 1.2 / max(uResolution.y, 1.0);
 
   vec2 p = vec2((uv.x - 0.5) * aspect, uv.y - 0.5);
@@ -77,12 +79,14 @@ void main() {
     float fi = float(i);
     float seed = hash(fi * 7.137 + 2.41 + uRaySeed * 0.71);
     float speedSeed = hash(fi * 2.91 + 6.0 + uRaySeed * 0.43);
-    float layer = mix(0.72, 1.34, hash(fi * 6.11 + 4.2 + uRaySeed * 0.29));
-    float sweep = fract(seed + t * mix(0.006, 0.026, speedSeed) * layer);
-    float angleOffset = mix(-0.48 * uRaySpread, 0.36 * uRaySpread, sweep);
-    float wrapFade = smoothstep(-0.48, -0.36, angleOffset) * (1.0 - smoothstep(0.24, 0.36, angleOffset));
-    float baseWidth = mix(0.009, 0.032, hash(fi * 3.71 + 8.0 + uRaySeed * 0.17));
-    float width = max(baseWidth / uBeamFocus, 0.008);
+    float phase = seed * 6.28318530718;
+    float drift = sin(t * mix(0.10, 0.28, speedSeed) + phase);
+    float counterDrift = sin(t * mix(0.035, 0.11, seed) + phase * 1.7) * 0.34;
+    float staticOffset = mix(-0.30, 0.24, hash(fi * 6.11 + 4.2 + uRaySeed * 0.29));
+    float angleOffset = (staticOffset + (drift + counterDrift) * 0.28) * uRaySpread;
+    float wrapFade = 1.0;
+    float baseWidth = mix(0.018, 0.072, hash(fi * 3.71 + 8.0 + uRaySeed * 0.17));
+    float width = max((baseWidth * uRayThickness) / uBeamFocus, 0.01);
     float microSpread = mix(-0.024, 0.024, hash(fi * 9.7 + 0.8 + uRaySeed * 0.31));
     float beamAngle = uAngle + angleOffset + microSpread;
     float angleDelta = angularDistance(pointAngle, beamAngle);
@@ -99,8 +103,8 @@ void main() {
     float softness = 0.82 + 0.18 * sin(t * (0.08 + seed * 0.08) + fi * 1.4);
     float localEntryFade = smoothstep(-0.12, 0.25, localDepth);
     float rayFalloff = exp(-max(localDepth - 1.85, 0.0) * mix(0.44, 0.68, seed));
-    float pulse = 0.9 + 0.1 * sin(t * (0.1 + seed * 0.12) + fi * 1.9);
-    float rayStrength = mix(0.12, 0.58, hash(fi * 5.33 + 3.3 + uRaySeed * 0.23));
+    float pulse = 0.94 + 0.06 * sin(t * (0.08 + seed * 0.08) + fi * 1.9);
+    float rayStrength = mix(0.1, 0.46, hash(fi * 5.33 + 3.3 + uRaySeed * 0.23));
 
     shafts += beam * wrapFade * softness * localEntryFade * floorFade * rayFalloff * pulse * rayStrength;
   }
@@ -109,7 +113,7 @@ void main() {
 
   float surfaceGlow = topRightFade * exp(-falloffDepth * 0.62) * 0.08;
   float atmosphere = broadWash * 0.12 + shafts * 0.2 + surfaceGlow;
-  float bloom = pow(saturate(broadWash * 0.48 + shafts * 0.4), 1.38) * 0.17;
+  float bloom = pow(clamp01(broadWash * 0.48 + shafts * 0.4), 1.38) * 0.17;
   float totalLight = (atmosphere + bloom) * uIntensity;
 
   vec3 col = uBgColor + uColor * totalLight;

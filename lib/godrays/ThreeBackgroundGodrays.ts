@@ -165,12 +165,20 @@ export class ThreeBackgroundGodrays {
       layer.setRaySpeed(patch.raySpeed);
     }
 
+    if (typeof patch.rayDirection === "number") {
+      layer.setRayDirection(patch.rayDirection);
+    }
+
     if (typeof patch.beamFocus === "number") {
       layer.setBeamFocus(patch.beamFocus);
     }
 
     if (typeof patch.raySpread === "number") {
       layer.setRaySpread(patch.raySpread);
+    }
+
+    if (typeof patch.rayThickness === "number") {
+      layer.setRayThickness(patch.rayThickness);
     }
 
     if (typeof patch.rayCount === "number") {
