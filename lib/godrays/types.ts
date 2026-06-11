@@ -31,11 +31,11 @@ export interface GodRaysOptions {
   rayDirection?: number;
   rayMotion?: number;
   rayDepthMode?: number;
-  beamFocus?: number;
   raySpread?: number;
   rayLength?: number;
   rayBrightness?: number;
   rayThickness?: number;
+  raySoftness?: number;
   rayCount?: number;
   raySeed?: number;
 }
@@ -77,11 +77,11 @@ export const DEFAULT_GODRAYS_OPTIONS: GodraysSceneOptions = {
     rayDirection: -1,
     rayMotion: 2,
     rayDepthMode: 2,
-    beamFocus: 1.0,
     raySpread: 1.18,
     rayLength: 1.4,
     rayBrightness: 1.0,
     rayThickness: 0.32,
+    raySoftness: 1.0,
     rayCount: 10,
   },
   foregroundLayer: {
@@ -97,11 +97,11 @@ export const DEFAULT_GODRAYS_OPTIONS: GodraysSceneOptions = {
     rayDirection: -1,
     rayMotion: 2,
     rayDepthMode: 2,
-    beamFocus: 1.0,
     raySpread: 1.18,
     rayLength: 1.4,
     rayBrightness: 1.0,
     rayThickness: 0.32,
+    raySoftness: 1.0,
     rayCount: 10,
   },
   model: {
@@ -110,7 +110,7 @@ export const DEFAULT_GODRAYS_OPTIONS: GodraysSceneOptions = {
   heroText: {
     color: "#EB6137",
     fontFamily: "Humane-Regular",
-    text: "HERO GOD RAYS",
+    text: "CINEMATIC RAYS",
     visible: true,
   },
 };
@@ -133,7 +133,7 @@ export const createDefaultGodraysOptions = (): GodraysSceneOptions => ({
   heroText: { ...(DEFAULT_GODRAYS_OPTIONS.heroText ?? {
     color: "#EB6137",
     fontFamily: "Humane-Regular",
-    text: "HERO GOD RAYS",
+    text: "CINEMATIC RAYS",
     visible: true,
   }) },
 });

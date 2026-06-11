@@ -65,11 +65,11 @@ uniform float uAngle;
 uniform float uRaySpeed;
 uniform float uRayDirection;
 uniform int uRayMotion;
-uniform float uBeamFocus;
 uniform float uRaySpread;
 uniform float uRayLength;
 uniform float uRayBrightness;
 uniform float uRayThickness;
+uniform float uRaySoftness;
 uniform int uRayCount;
 uniform float uRaySeed;
 uniform vec2 uOrigin;
@@ -147,19 +147,20 @@ void main() {
     float wrapFade = smoothstep(-0.72 * uRaySpread, -0.54 * uRaySpread, angleOffset) *
       (1.0 - smoothstep(0.42 * uRaySpread, 0.58 * uRaySpread, angleOffset));
     float thickness = max(uRayThickness, 0.005);
+    float edgeSoftness = max(uRaySoftness, 0.1);
     float baseWidth = mix(0.024, 0.07, hash(fi * 3.71 + 8.0 + uRaySeed * 0.17));
-    float width = max((baseWidth * thickness) / max(uBeamFocus, 0.05), 0.00075);
+    float width = max(baseWidth * thickness, 0.00075);
     float microSpread = mix(-0.018, 0.018, hash(fi * 9.7 + 0.8 + uRaySeed * 0.31));
     float beamAngle = uAngle + angleOffset + microSpread;
     float angleDelta = angularDistance(pointAngle, beamAngle);
     float localDepth = sourceDistance * cos(angleDelta);
 
     float distanceToBeam = angleDelta / width;
-    float beam = exp(-distanceToBeam * distanceToBeam);
+    float beam = exp(-pow(distanceToBeam, 2.0 / edgeSoftness));
     float companionSeed = hash(fi * 10.13 + 2.6 + uRaySeed * 0.59);
     float companionAngle = angleOffset + mix(-0.1, 0.1, companionSeed) * uRaySpread;
     float companionDistance = angularDistance(pointAngle, uAngle + companionAngle) / (width * mix(0.75, 1.2, companionSeed));
-    float companion = exp(-companionDistance * companionDistance) * smoothstep(0.58, 0.98, companionSeed) * 0.18;
+    float companion = exp(-pow(companionDistance, 2.0 / edgeSoftness)) * smoothstep(0.58, 0.98, companionSeed) * 0.18;
     beam += companion;
 
     float softness = 0.92 + 0.08 * sin(t * (0.04 + seed * 0.05) + fi * 1.4);
@@ -265,11 +266,11 @@ export class SpatialGodRays {
       material.uniforms.uRaySpeed.value = this.sanitize(this.options.raySpeed, 0.62, 0, 10);
       material.uniforms.uRayDirection.value = this.options.rayDirection ?? -1;
       material.uniforms.uRayMotion.value = this.options.rayMotion ?? 2;
-      material.uniforms.uBeamFocus.value = this.sanitize(this.options.beamFocus, 1, 0.05, 16);
       material.uniforms.uRaySpread.value = this.sanitize(this.options.raySpread, 1, 0, 10);
       material.uniforms.uRayLength.value = this.sanitize(this.options.rayLength, 1.4, 0.05, 4);
       material.uniforms.uRayBrightness.value = this.sanitize(this.options.rayBrightness, 1, 0, 8);
       material.uniforms.uRayThickness.value = this.sanitize(this.options.rayThickness, 0.32, 0.005, 10);
+      material.uniforms.uRaySoftness.value = this.sanitize(this.options.raySoftness, 1, 0.25, 3);
       material.uniforms.uRayCount.value = Math.floor(this.sanitize(this.options.rayCount, 10, 1, 32));
       material.uniforms.uOrigin.value.copy(origin);
       material.uniforms.uColor.value.setRGB(color.x, color.y, color.z);
@@ -339,11 +340,11 @@ export class SpatialGodRays {
         uRaySpeed: { value: this.options.raySpeed ?? 0.62 },
         uRayDirection: { value: this.options.rayDirection ?? -1 },
         uRayMotion: { value: this.options.rayMotion ?? 2 },
-        uBeamFocus: { value: this.options.beamFocus ?? 1 },
         uRaySpread: { value: this.options.raySpread ?? 1 },
         uRayLength: { value: this.options.rayLength ?? 1.4 },
         uRayBrightness: { value: this.options.rayBrightness ?? 1 },
         uRayThickness: { value: this.options.rayThickness ?? 0.32 },
+        uRaySoftness: { value: this.options.raySoftness ?? 1 },
         uRayCount: { value: Math.floor(this.options.rayCount ?? 10) },
         uRaySeed: { value: 17.13 + seedOffset },
         uOrigin: { value: (this.options.origin ?? new Vector2(1.48, 1.86)).clone() },
@@ -430,7 +431,7 @@ export class ThreeBackgroundGodraysDemo {
         ...(DEFAULT_GODRAYS_OPTIONS.heroText ?? {
           color: "#EB6137",
           fontFamily: "Humane-Regular",
-          text: "HERO GOD RAYS",
+          text: "CINEMATIC RAYS",
           visible: true,
         }),
         ...config.options?.heroText,

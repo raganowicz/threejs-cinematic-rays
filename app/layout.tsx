@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Three.js Background Godrays",
+  title: "Three.js Cinematic Rays",
   description:
-    "Open-source pure Three.js snippet for animated godrays in background and foreground layers.",
+    "Open-source pure Three.js cinematic rays and god rays layer for stylized backgrounds, overlays, and reflective scenes.",
 };
 
 export default function RootLayout({

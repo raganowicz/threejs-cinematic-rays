@@ -22,11 +22,11 @@ uniform vec2  uOrigin;
 uniform float uAngle;
 uniform float uRaySpeed;
 uniform float uRayDirection;
-uniform float uBeamFocus;
 uniform float uRaySpread;
 uniform float uRayLength;
 uniform float uRayBrightness;
 uniform float uRayThickness;
+uniform float uRaySoftness;
 uniform int uRayCount;
 uniform float uRaySeed;
 
@@ -90,18 +90,19 @@ void main() {
     float angleOffset = (staticOffset + (drift + counterDrift) * 0.28) * uRaySpread;
     float wrapFade = 1.0;
     float baseWidth = mix(0.018, 0.072, hash(fi * 3.71 + 8.0 + uRaySeed * 0.17));
-    float width = max((baseWidth * uRayThickness) / max(uBeamFocus, 0.05), 0.00075);
+    float width = max(baseWidth * uRayThickness, 0.00075);
+    float edgeSoftness = max(uRaySoftness, 0.1);
     float microSpread = mix(-0.024, 0.024, hash(fi * 9.7 + 0.8 + uRaySeed * 0.31));
     float beamAngle = uAngle + angleOffset + microSpread;
     float angleDelta = angularDistance(pointAngle, beamAngle);
     float localDepth = sourceDistance * cos(angleDelta);
 
     float distanceToBeam = angleDelta / (width + beamAA);
-    float beam = exp(-distanceToBeam * distanceToBeam);
+    float beam = exp(-pow(distanceToBeam, 2.0 / edgeSoftness));
     float companionSeed = hash(fi * 10.13 + 2.6 + uRaySeed * 0.59);
     float companionAngle = angleOffset + mix(-0.08, 0.08, companionSeed);
     float companionDistance = angularDistance(pointAngle, uAngle + companionAngle) / (width * mix(0.55, 0.9, companionSeed));
-    float companion = exp(-companionDistance * companionDistance) * smoothstep(0.58, 0.98, companionSeed) * 0.22;
+    float companion = exp(-pow(companionDistance, 2.0 / edgeSoftness)) * smoothstep(0.58, 0.98, companionSeed) * 0.22;
     beam += companion;
 
     float softness = 0.82 + 0.18 * sin(t * (0.08 + seed * 0.08) + fi * 1.4);

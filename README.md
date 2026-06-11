@@ -1,8 +1,8 @@
-# Three.js Hero God Rays
+# Three.js Cinematic Rays
 
-Reusable **pure three.js** hero god rays for stylized backgrounds, foreground overlays, and lightweight spatial light sheets.
+Reusable **pure three.js** cinematic rays and stylized god rays for backgrounds, foreground overlays, reflective scenes, and lightweight spatial light sheets.
 
-The name is intentionally focused on **hero sections**: this project is built for art-directed landing pages, product scenes, reflective chrome details, and dramatic background light beams that are quick to tune and easy to drop into an existing Three.js scene.
+Three.js Cinematic Rays is built for art-directed landing pages, product scenes, atmospheric WebGL backgrounds, reflective chrome details, and dramatic light beams that are quick to tune and easy to drop into an existing Three.js scene. It is not limited to hero sections, but it works especially well anywhere you need cinematic Three.js god rays without a full postprocessing pipeline.
 
 No `@react-three/fiber`, no `drei`.
 
@@ -95,7 +95,7 @@ const godrays = new SpatialGodRays({
   rayLength: 1.4,
   rayBrightness: 1,
   rayThickness: 0.32,
-  beamFocus: 1,
+  raySoftness: 1,
 });
 
 for (const mesh of godrays.meshes) {
@@ -142,17 +142,17 @@ The demo title is rendered inside Three.js as a canvas-textured plane behind the
 
 ## Compared To `three-good-godrays`
 
-Three.js Hero God Rays is a lightweight, art-directed godrays layer. It is designed for backgrounds, foreground overlays, hero sections, reflective decorative rays, and quick reuse in an existing Three.js scene.
+Three.js Cinematic Rays is a lightweight, art-directed god rays layer. It is designed for backgrounds, foreground overlays, landing pages, reflective decorative rays, and quick reuse in an existing Three.js scene.
 
 `three-good-godrays` is a heavier postprocessing effect. It raymarches through the scene and samples shadow maps, so it is better when you need volumetric light that reacts to real scene geometry, shadows, `PointLight`s, or `DirectionalLight`s.
 
 Key differences:
 
-- Three.js Hero God Rays uses stylized shader planes / spatial light sheets; `three-good-godrays` uses a raymarched postprocessing pass.
-- Three.js Hero God Rays does not require shadow maps or real light sources; `three-good-godrays` does.
-- Three.js Hero God Rays has direct art controls like `rayCount`, `raySpread`, `rayLength`, `rayBrightness`, `rayThickness`, `beamFocus`, `rayMotion`, and `rayDepthMode`; `three-good-godrays` exposes physical/postprocess controls like density, attenuation, blur, and raymarch steps.
-- Three.js Hero God Rays is easier to copy into a small Three.js scene and tune visually; `three-good-godrays` is better for physically motivated volumetric lighting.
-- Three.js Hero God Rays can render rays behind, in front, or around a model and can be captured by reflective materials; `three-good-godrays` primarily affects the final postprocessed image.
+- Three.js Cinematic Rays uses stylized shader planes / spatial light sheets; `three-good-godrays` uses a raymarched postprocessing pass.
+- Three.js Cinematic Rays does not require shadow maps or real light sources; `three-good-godrays` does.
+- Three.js Cinematic Rays has direct art controls like `rayCount`, `raySpread`, `rayLength`, `rayBrightness`, `rayThickness`, `rayMotion`, and `rayDepthMode`; `three-good-godrays` exposes physical/postprocess controls like density, attenuation, blur, and raymarch steps.
+- Three.js Cinematic Rays is easier to copy into a small Three.js scene and tune visually; `three-good-godrays` is better for physically motivated volumetric lighting.
+- Three.js Cinematic Rays can render rays behind, in front, or around a model and can be captured by reflective materials; `three-good-godrays` primarily affects the final postprocessed image.
 
 Use this project for controllable visual mood and product/landing-page art direction. Use `three-good-godrays` for shadow-aware volumetric light in a full postprocessing pipeline.
 
@@ -164,8 +164,8 @@ Use this project for controllable visual mood and product/landing-page art direc
 | --- | --- | ---: | --- |
 | `visible` | `boolean` | `true` | Enables/disables the ray meshes. |
 | `color` | `Vector3` | `(0.612, 0.639, 0.651)` | Ray color in linear-ish RGB components. |
-| `opacity` | `number` | `0.58` | Overall alpha of the rays. |
-| `intensity` | `number` | `0.75` | Brightness of the ray light contribution. |
+| `opacity` | `number` | `0.58` | Overall layer alpha. Lower this when the whole ray layer should blend more subtly. |
+| `intensity` | `number` | `0.75` | Overall light contribution for wash, shafts, and bloom. |
 | `angle` | `number` | `-2.3` | Main ray direction in radians. |
 | `origin` | `Vector2` | `(1.48, 1.86)` | Source position in normalized screen-like coordinates. Values can be outside `0..1`. |
 | `z` | `number` | `-1.8` | Back ray sheet depth. In the demo this sits behind both the model and hero text. |
@@ -176,9 +176,9 @@ Use this project for controllable visual mood and product/landing-page art direc
 | `rayCount` | `number` | `10` | Number of separate ray lanes. Range is clamped to `1..32`. |
 | `raySpread` | `number` | `1.18` | Distance between ray lanes. Higher values place beams farther apart. |
 | `rayLength` | `number` | `1.4` | Controls where each shaft fades out and how far the spatial ray sheets extend beyond the viewport. Higher values push the fade past the screen edge. Recommended range: `0.05..4` in `0.01` steps. |
-| `rayBrightness` | `number` | `1.0` | Extra brightness multiplier for the shafts only. Useful for laser-like looks without changing opacity. |
-| `rayThickness` | `number` | `0.32` | Beam width. Very low values plus high `beamFocus` create laser-like lines. |
-| `beamFocus` | `number` | `1.0` | Beam sharpness. Higher means thinner, more focused beams. |
+| `rayBrightness` | `number` | `1.0` | Extra multiplier for the shaft/core light only. Higher values with lower `intensity` can create lightsaber-like bright cores with a softer glow. |
+| `rayThickness` | `number` | `0.32` | Beam width. Very low values create focused, laser-like lines. |
+| `raySoftness` | `number` | `1.0` | Edge softness of each beam. Lower values create sharper pillars; higher values create hazier, more diffused rays. |
 | `raySeed` | `number` | random | Per-layer randomization seed. |
 
 Hero text options:
@@ -186,7 +186,7 @@ Hero text options:
 | Option | Type | Default | Description |
 | --- | --- | ---: | --- |
 | `heroText.visible` | `boolean` | `true` | Shows/hides the Three.js text plane. |
-| `heroText.text` | `string` | `"HERO GOD RAYS"` | Text rendered into the canvas texture. |
+| `heroText.text` | `string` | `"CINEMATIC RAYS"` | Text rendered into the canvas texture. |
 | `heroText.color` | `string` | `"#EB6137"` | Text color. |
 | `heroText.fontFamily` | `string` | `"Humane-Regular"` | CSS font-family used by the canvas texture. Not exposed in the demo GUI. |
 
@@ -194,9 +194,9 @@ Useful presets:
 
 | Effect | Suggested changes |
 | --- | --- |
-| Soft window light | Higher `rayThickness`, low `beamFocus`, low `rayCount`, medium `raySpread`. |
+| Soft window light | Higher `rayThickness`, medium/high `raySoftness`, low `rayCount`, medium `raySpread`. |
 | Underwater shafts | Medium `rayThickness`, lower `raySpeed`, orbit motion, higher `raySpread`. |
-| Disco lasers | Very low `rayThickness`, high `beamFocus`, higher `rayBrightness`, longer `rayLength`, linear motion. |
+| Disco lasers | Very low `rayThickness`, low `raySoftness`, higher `rayBrightness`, longer `rayLength`, linear motion. |
 
 ---
 

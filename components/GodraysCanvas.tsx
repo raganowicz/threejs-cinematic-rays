@@ -64,7 +64,7 @@ export function GodraysCanvas() {
       stats.dom.style.zIndex = "20";
       document.body.appendChild(stats.dom);
 
-      gui = new GUI({ title: "Three.js Hero God Rays" });
+      gui = new GUI({ title: "Three.js Cinematic Rays" });
 
       const backgroundFolder = gui.addFolder("Background");
       backgroundFolder
@@ -103,7 +103,7 @@ export function GodraysCanvas() {
       const textState = options.heroText ?? {
         color: "#EB6137",
         fontFamily: "Humane-Regular",
-        text: "HERO GOD RAYS",
+        text: "CINEMATIC RAYS",
         visible: true,
       };
       options.heroText = textState;
@@ -169,9 +169,6 @@ export function GodraysCanvas() {
         if (typeof layer.rayDepthMode !== "number") {
           layer.rayDepthMode = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayDepthMode ?? 2;
         }
-        if (typeof layer.beamFocus !== "number") {
-          layer.beamFocus = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.beamFocus ?? 1.0;
-        }
         if (typeof layer.raySpread !== "number") {
           layer.raySpread = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.raySpread ?? 1.0;
         }
@@ -183,6 +180,9 @@ export function GodraysCanvas() {
         }
         if (typeof layer.rayThickness !== "number") {
           layer.rayThickness = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayThickness ?? 1.0;
+        }
+        if (typeof layer.raySoftness !== "number") {
+          layer.raySoftness = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.raySoftness ?? 1.0;
         }
         if (typeof layer.rayCount !== "number") {
           layer.rayCount = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayCount ?? 8;
@@ -199,6 +199,9 @@ export function GodraysCanvas() {
         });
         folder.add(layer, "intensity", 0, 3, 0.01).onChange((value: number) => {
           updateLayerOption(layerKey, { intensity: value });
+        });
+        folder.add(layer, "rayBrightness", 0, 8, 0.01).name("ray brightness").onChange((value: number) => {
+          updateLayerOption(layerKey, { rayBrightness: value });
         });
         folder.add(layer, "angle", -3.2, 0.8, 0.001).onChange((value: number) => {
           updateLayerOption(layerKey, { angle: value });
@@ -239,20 +242,17 @@ export function GodraysCanvas() {
           .onChange((value: number) => {
             updateLayerOption(layerKey, { rayDepthMode: Number(value) });
           });
-        folder.add(layer, "beamFocus", 0.05, 16, 0.01).name("beam focus").onChange((value: number) => {
-          updateLayerOption(layerKey, { beamFocus: value });
-        });
         folder.add(layer, "raySpread", 0.2, 3, 0.01).name("ray spread").onChange((value: number) => {
           updateLayerOption(layerKey, { raySpread: value });
         });
         folder.add(layer, "rayLength", 0.05, 4, 0.01).name("ray length").onChange((value: number) => {
           updateLayerOption(layerKey, { rayLength: value });
         });
-        folder.add(layer, "rayBrightness", 0, 8, 0.01).name("ray brightness").onChange((value: number) => {
-          updateLayerOption(layerKey, { rayBrightness: value });
-        });
         folder.add(layer, "rayThickness", 0.005, 4, 0.001).name("ray thickness").onChange((value: number) => {
           updateLayerOption(layerKey, { rayThickness: value });
+        });
+        folder.add(layer, "raySoftness", 0.25, 3, 0.01).name("ray softness").onChange((value: number) => {
+          updateLayerOption(layerKey, { raySoftness: value });
         });
         folder.add(layer, "rayCount", 1, 32, 1).name("ray count").onChange((value: number) => {
           updateLayerOption(layerKey, { rayCount: value });
