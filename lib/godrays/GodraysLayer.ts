@@ -37,6 +37,8 @@ export class GodRays {
       rayDirection = -1.0,
       beamFocus = 1.0,
       raySpread = 1.0,
+      rayLength = 1.4,
+      rayBrightness = 1.0,
       rayThickness = 1.0,
       rayCount = 8,
       raySeed = Math.random() * 1000,
@@ -58,6 +60,8 @@ export class GodRays {
         uRayDirection: { value: rayDirection },
         uBeamFocus: { value: beamFocus },
         uRaySpread: { value: raySpread },
+        uRayLength: { value: rayLength },
+        uRayBrightness: { value: rayBrightness },
         uRayThickness: { value: rayThickness },
         uRayCount: { value: rayCount },
         uRaySeed: { value: raySeed },
@@ -128,8 +132,16 @@ export class GodRays {
     this.material.uniforms.uRaySpread.value = spread;
   }
 
+  setRayLength(length: number): void {
+    this.material.uniforms.uRayLength.value = Math.max(0.05, Math.min(4, length));
+  }
+
+  setRayBrightness(brightness: number): void {
+    this.material.uniforms.uRayBrightness.value = Math.max(0, brightness);
+  }
+
   setRayThickness(thickness: number): void {
-    this.material.uniforms.uRayThickness.value = Math.max(0.1, thickness);
+    this.material.uniforms.uRayThickness.value = Math.max(0.005, thickness);
   }
 
   setRayCount(count: number): void {

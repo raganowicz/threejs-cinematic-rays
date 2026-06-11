@@ -64,7 +64,7 @@ export function GodraysCanvas() {
       stats.dom.style.zIndex = "20";
       document.body.appendChild(stats.dom);
 
-      gui = new GUI({ title: "Three.js Background Godrays" });
+      gui = new GUI({ title: "Three.js Hero God Rays" });
 
       const backgroundFolder = gui.addFolder("Background");
       backgroundFolder
@@ -98,6 +98,21 @@ export function GodraysCanvas() {
             visible: value,
           },
         });
+      });
+
+      const textState = options.heroText ?? {
+        color: "#EB6137",
+        fontFamily: "Humane-Regular",
+        text: "HERO GOD RAYS",
+        visible: true,
+      };
+      options.heroText = textState;
+      const textFolder = gui.addFolder("Text");
+      textFolder.add(textState, "visible").name("visible").onChange((value: boolean) => {
+        godrays.updateOptions({ heroText: { visible: value } });
+      });
+      textFolder.addColor(textState, "color").name("color").onChange((value: string) => {
+        godrays.updateOptions({ heroText: { color: value } });
       });
 
       const updateLayerOption = (
@@ -153,6 +168,12 @@ export function GodraysCanvas() {
         }
         if (typeof layer.raySpread !== "number") {
           layer.raySpread = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.raySpread ?? 1.0;
+        }
+        if (typeof layer.rayLength !== "number") {
+          layer.rayLength = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayLength ?? 1.4;
+        }
+        if (typeof layer.rayBrightness !== "number") {
+          layer.rayBrightness = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayBrightness ?? 1.0;
         }
         if (typeof layer.rayThickness !== "number") {
           layer.rayThickness = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayThickness ?? 1.0;
@@ -211,6 +232,12 @@ export function GodraysCanvas() {
         });
         folder.add(layer, "raySpread", 0.2, 3, 0.01).name("ray spread").onChange((value: number) => {
           updateLayerOption(layerKey, { raySpread: value });
+        });
+        folder.add(layer, "rayLength", 0.05, 4, 0.01).name("ray length").onChange((value: number) => {
+          updateLayerOption(layerKey, { rayLength: value });
+        });
+        folder.add(layer, "rayBrightness", 0, 8, 0.01).name("ray brightness").onChange((value: number) => {
+          updateLayerOption(layerKey, { rayBrightness: value });
         });
         folder.add(layer, "rayThickness", 0.005, 4, 0.001).name("ray thickness").onChange((value: number) => {
           updateLayerOption(layerKey, { rayThickness: value });

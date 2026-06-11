@@ -177,6 +177,14 @@ export class ThreeBackgroundGodrays {
       layer.setRaySpread(patch.raySpread);
     }
 
+    if (typeof patch.rayLength === "number") {
+      layer.setRayLength(patch.rayLength);
+    }
+
+    if (typeof patch.rayBrightness === "number") {
+      layer.setRayBrightness(patch.rayBrightness);
+    }
+
     if (typeof patch.rayThickness === "number") {
       layer.setRayThickness(patch.rayThickness);
     }

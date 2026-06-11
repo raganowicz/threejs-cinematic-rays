@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Humane-Regular";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/webfonts/Humane-Regular.woff2") format("woff2"),
+    url("/webfonts/Humane-Regular.woff") format("woff"),
+    url("/webfonts/Humane-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Humane-Light";
+  font-style: normal;
+  font-weight: 300;
+  src: url("/webfonts/Humane-Light.woff2") format("woff2"),
+    url("/webfonts/Humane-Light.woff") format("woff"),
+    url("/webfonts/Humane-Light.ttf") format("truetype");
+}
+
 html,
 body,
 #__next {
