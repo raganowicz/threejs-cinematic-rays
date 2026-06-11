@@ -54,12 +54,15 @@ uniform float uTime;
 uniform float uIntensity;
 uniform float uOpacity;
 uniform float uAspect;
+uniform float uSheetOverscan;
 uniform float uAngle;
 uniform float uRaySpeed;
 uniform float uRayDirection;
 uniform int uRayMotion;
 uniform float uBeamFocus;
 uniform float uRaySpread;
+uniform float uRayLength;
+uniform float uRayBrightness;
 uniform float uRayThickness;
 uniform int uRayCount;
 uniform float uRaySeed;
@@ -84,7 +87,7 @@ float dither(vec2 p) {
 }
 
 void main() {
-  vec2 uv = vUv;
+  vec2 uv = (vUv - 0.5) * uSheetOverscan + 0.5;
   float t = (uTime + uRaySeed * 0.37) * 0.62;
   float motionSign = (uRayMotion == 0 || uRayMotion == 3) ? 1.0 : -1.0;
 
@@ -95,15 +98,17 @@ void main() {
   vec2 rayNormal = vec2(-rayDir.y, rayDir.x);
   float pointAngle = atan(toPoint.y, toPoint.x);
   float sourceDistance = length(toPoint);
+  float rayLength = max(uRayLength, 0.05);
+  float rayLengthT = clamp01((rayLength - 0.05) / 1.95);
 
   float depth = dot(toPoint, rayDir);
   float cross = dot(toPoint, rayNormal);
   float falloffDepth = max(depth - 2.75, 0.0);
 
   float entryFade = smoothstep(-0.18, 0.38, depth);
-  float depthFade = 1.0 - smoothstep(2.85, 4.3, depth);
-  float distanceFalloff = exp(-falloffDepth * 0.28);
-  float floorFade = smoothstep(0.02, 0.42, uv.y);
+  float depthFade = 1.0 - smoothstep(mix(1.2, 7.4, rayLengthT), mix(1.8, 10.2, rayLengthT), depth);
+  float distanceFalloff = exp(-falloffDepth * mix(0.62, 0.025, rayLengthT));
+  float floorFade = mix(smoothstep(0.02, 0.42, uv.y), 1.0, smoothstep(0.18, 0.72, rayLengthT));
   float sourceFade = smoothstep(0.08, 0.42, sourceDistance);
 
   float broadWash = exp(-abs(cross - 0.1) * 0.72);
@@ -135,9 +140,9 @@ void main() {
     float angleOffset = (laneOffset + drift) * uRaySpread;
     float wrapFade = smoothstep(-0.72 * uRaySpread, -0.54 * uRaySpread, angleOffset) *
       (1.0 - smoothstep(0.42 * uRaySpread, 0.58 * uRaySpread, angleOffset));
-    float thickness = max(uRayThickness, 0.025);
+    float thickness = max(uRayThickness, 0.005);
     float baseWidth = mix(0.024, 0.07, hash(fi * 3.71 + 8.0 + uRaySeed * 0.17));
-    float width = max((baseWidth * thickness) / max(uBeamFocus, 0.2), 0.0025);
+    float width = max((baseWidth * thickness) / max(uBeamFocus, 0.05), 0.00075);
     float microSpread = mix(-0.018, 0.018, hash(fi * 9.7 + 0.8 + uRaySeed * 0.31));
     float beamAngle = uAngle + angleOffset + microSpread;
     float angleDelta = angularDistance(pointAngle, beamAngle);
@@ -153,14 +158,17 @@ void main() {
 
     float softness = 0.92 + 0.08 * sin(t * (0.04 + seed * 0.05) + fi * 1.4);
     float localEntryFade = smoothstep(-0.16, 0.36, localDepth);
-    float rayFalloff = exp(-max(localDepth - 2.65, 0.0) * mix(0.2, 0.34, seed));
+    float tailStart = mix(0.55, 14.0, rayLengthT);
+    float tailSoftness = mix(0.22, 5.6, rayLengthT);
+    float rayTailFade = 1.0 - smoothstep(tailStart, tailStart + tailSoftness, max(localDepth, 0.0));
+    float rayFalloff = rayTailFade;
     float pulse = 0.98 + 0.02 * sin(t * (0.05 + seed * 0.05) + fi * 1.9);
     float rayStrength = mix(0.22, 0.68, hash(fi * 5.33 + 3.3 + uRaySeed * 0.23));
 
     shafts += beam * wrapFade * softness * localEntryFade * sourceFade * floorFade * rayFalloff * pulse * rayStrength;
   }
 
-  shafts = shafts / (1.0 + shafts * 0.52);
+  shafts = (shafts / (1.0 + shafts * 0.52)) * max(uRayBrightness, 0.0);
 
   float atmosphere = broadWash * 0.055 + shafts * 0.36;
   float bloom = pow(clamp01(broadWash * 0.18 + shafts * 0.72), 1.24) * 0.2;
@@ -183,6 +191,9 @@ export class SpatialGodRays {
   private readonly materials: ShaderMaterial[] = [];
   private elapsedTime = 0;
   private lastAspect = 1;
+  private lastCamera?: PerspectiveCamera;
+  private lastWidth = 1;
+  private lastHeight = 1;
   private options: GodRaysOptions;
 
   constructor(options: GodRaysOptions) {
@@ -208,13 +219,11 @@ export class SpatialGodRays {
 
   resize(camera: PerspectiveCamera, width: number, height: number): void {
     this.lastAspect = width / Math.max(height, 1);
+    this.lastCamera = camera;
+    this.lastWidth = width;
+    this.lastHeight = height;
 
-    for (const sheet of this.sheets) {
-      const distance = Math.max(camera.position.z - sheet.position.z, 0.01);
-      const viewportHeight = 2 * Math.tan((camera.fov * Math.PI) / 360) * distance;
-      const viewportWidth = viewportHeight * this.lastAspect;
-      sheet.scale.set(viewportWidth * 1.65, viewportHeight * 1.65, 1);
-    }
+    this.updateSheetScale(camera, width, height);
 
     for (const material of this.materials) {
       material.uniforms.uAspect.value = this.lastAspect;
@@ -243,13 +252,19 @@ export class SpatialGodRays {
       material.uniforms.uRaySpeed.value = this.sanitize(this.options.raySpeed, 0.62, 0, 10);
       material.uniforms.uRayDirection.value = this.options.rayDirection ?? -1;
       material.uniforms.uRayMotion.value = this.options.rayMotion ?? 2;
-      material.uniforms.uBeamFocus.value = this.sanitize(this.options.beamFocus, 1, 0.2, 10);
+      material.uniforms.uBeamFocus.value = this.sanitize(this.options.beamFocus, 1, 0.05, 16);
       material.uniforms.uRaySpread.value = this.sanitize(this.options.raySpread, 1, 0, 10);
-      material.uniforms.uRayThickness.value = this.sanitize(this.options.rayThickness, 0.32, 0.025, 10);
+      material.uniforms.uRayLength.value = this.sanitize(this.options.rayLength, 1.4, 0.05, 4);
+      material.uniforms.uRayBrightness.value = this.sanitize(this.options.rayBrightness, 1, 0, 8);
+      material.uniforms.uRayThickness.value = this.sanitize(this.options.rayThickness, 0.32, 0.005, 10);
       material.uniforms.uRayCount.value = Math.floor(this.sanitize(this.options.rayCount, 10, 1, 32));
       material.uniforms.uOrigin.value.copy(origin);
       material.uniforms.uColor.value.setRGB(color.x, color.y, color.z);
       material.uniforms.uAspect.value = this.lastAspect;
+    }
+
+    if (this.lastCamera) {
+      this.updateSheetScale(this.lastCamera, this.lastWidth, this.lastHeight);
     }
 
     this.setVisible(this.options.visible ?? true);
@@ -261,6 +276,31 @@ export class SpatialGodRays {
     }
 
     return Math.max(min, Math.min(max, value));
+  }
+
+  private getSheetOverscan(): number {
+    const rayLength = this.sanitize(this.options.rayLength, 1.4, 0.05, 4);
+    const lengthT = (rayLength - 0.05) / 3.95;
+
+    return 1.1 + Math.pow(lengthT, 3) * 4.4;
+  }
+
+  private updateSheetScale(camera: PerspectiveCamera, width: number, height: number): void {
+    this.lastAspect = width / Math.max(height, 1);
+    const overscan = this.getSheetOverscan();
+
+    for (const sheet of this.sheets) {
+      const distance = Math.max(camera.position.z - sheet.position.z, 0.01);
+      const viewportHeight = 2 * Math.tan((camera.fov * Math.PI) / 360) * distance;
+      const viewportWidth = viewportHeight * this.lastAspect;
+
+      sheet.scale.set(viewportWidth * overscan, viewportHeight * overscan, 1);
+    }
+
+    for (const material of this.materials) {
+      material.uniforms.uSheetOverscan.value = overscan;
+      material.uniforms.uAspect.value = this.lastAspect;
+    }
   }
 
   dispose(): void {
@@ -281,12 +321,15 @@ export class SpatialGodRays {
         uIntensity: { value: (this.options.intensity ?? 0.75) * energy },
         uOpacity: { value: (this.options.opacity ?? 0.58) * energy },
         uAspect: { value: 1 },
+        uSheetOverscan: { value: this.getSheetOverscan() },
         uAngle: { value: this.options.angle ?? -2.3 },
         uRaySpeed: { value: this.options.raySpeed ?? 0.62 },
         uRayDirection: { value: this.options.rayDirection ?? -1 },
         uRayMotion: { value: this.options.rayMotion ?? 2 },
         uBeamFocus: { value: this.options.beamFocus ?? 1 },
         uRaySpread: { value: this.options.raySpread ?? 1 },
+        uRayLength: { value: this.options.rayLength ?? 1.4 },
+        uRayBrightness: { value: this.options.rayBrightness ?? 1 },
         uRayThickness: { value: this.options.rayThickness ?? 0.32 },
         uRayCount: { value: Math.floor(this.options.rayCount ?? 10) },
         uRaySeed: { value: 17.13 + seedOffset },

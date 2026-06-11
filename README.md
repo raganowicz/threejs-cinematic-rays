@@ -1,6 +1,8 @@
-# Three.js Godrays
+# Three.js Hero God Rays
 
-Reusable **pure three.js** godrays for stylized background, foreground, and lightweight spatial light sheets.
+Reusable **pure three.js** hero god rays for stylized backgrounds, foreground overlays, and lightweight spatial light sheets.
+
+The name is intentionally focused on **hero sections**: this project is built for art-directed landing pages, product scenes, reflective chrome details, and dramatic background light beams that are quick to tune and easy to drop into an existing Three.js scene.
 
 No `@react-three/fiber`, no `drei`.
 
@@ -88,6 +90,8 @@ const godrays = new SpatialGodRays({
   rayDepthMode: 2,
   rayCount: 10,
   raySpread: 1.18,
+  rayLength: 1.4,
+  rayBrightness: 1,
   rayThickness: 0.32,
   beamFocus: 1,
 });
@@ -125,17 +129,17 @@ The reusable 3D class is `SpatialGodRays`. It does not create a renderer or came
 
 ## Compared To `three-good-godrays`
 
-This project is a lightweight, art-directed godrays layer. It is designed for backgrounds, foreground overlays, hero sections, reflective decorative rays, and quick reuse in an existing Three.js scene.
+Three.js Hero God Rays is a lightweight, art-directed godrays layer. It is designed for backgrounds, foreground overlays, hero sections, reflective decorative rays, and quick reuse in an existing Three.js scene.
 
 `three-good-godrays` is a heavier postprocessing effect. It raymarches through the scene and samples shadow maps, so it is better when you need volumetric light that reacts to real scene geometry, shadows, `PointLight`s, or `DirectionalLight`s.
 
 Key differences:
 
-- This project uses stylized shader planes / spatial light sheets; `three-good-godrays` uses a raymarched postprocessing pass.
-- This project does not require shadow maps or real light sources; `three-good-godrays` does.
-- This project has direct art controls like `rayCount`, `raySpread`, `rayThickness`, `beamFocus`, `rayMotion`, and `rayDepthMode`; `three-good-godrays` exposes physical/postprocess controls like density, attenuation, blur, and raymarch steps.
-- This project is easier to copy into a small Three.js scene and tune visually; `three-good-godrays` is better for physically motivated volumetric lighting.
-- This project can render rays behind, in front, or around a model and can be captured by reflective materials; `three-good-godrays` primarily affects the final postprocessed image.
+- Three.js Hero God Rays uses stylized shader planes / spatial light sheets; `three-good-godrays` uses a raymarched postprocessing pass.
+- Three.js Hero God Rays does not require shadow maps or real light sources; `three-good-godrays` does.
+- Three.js Hero God Rays has direct art controls like `rayCount`, `raySpread`, `rayLength`, `rayBrightness`, `rayThickness`, `beamFocus`, `rayMotion`, and `rayDepthMode`; `three-good-godrays` exposes physical/postprocess controls like density, attenuation, blur, and raymarch steps.
+- Three.js Hero God Rays is easier to copy into a small Three.js scene and tune visually; `three-good-godrays` is better for physically motivated volumetric lighting.
+- Three.js Hero God Rays can render rays behind, in front, or around a model and can be captured by reflective materials; `three-good-godrays` primarily affects the final postprocessed image.
 
 Use this project for controllable visual mood and product/landing-page art direction. Use `three-good-godrays` for shadow-aware volumetric light in a full postprocessing pipeline.
 
@@ -157,6 +161,8 @@ Use this project for controllable visual mood and product/landing-page art direc
 | `rayDepthMode` | `0 \| 1 \| 2` | `2` | `0` behind model, `1` in front of model, `2` both. |
 | `rayCount` | `number` | `10` | Number of separate ray lanes. Range is clamped to `1..32`. |
 | `raySpread` | `number` | `1.18` | Distance between ray lanes. Higher values place beams farther apart. |
+| `rayLength` | `number` | `1.4` | Controls where each shaft fades out and how far the spatial ray sheets extend beyond the viewport. Higher values push the fade past the screen edge. Recommended range: `0.05..4` in `0.01` steps. |
+| `rayBrightness` | `number` | `1.0` | Extra brightness multiplier for the shafts only. Useful for laser-like looks without changing opacity. |
 | `rayThickness` | `number` | `0.32` | Beam width. Very low values plus high `beamFocus` create laser-like lines. |
 | `beamFocus` | `number` | `1.0` | Beam sharpness. Higher means thinner, more focused beams. |
 | `raySeed` | `number` | random | Per-layer randomization seed. |
@@ -167,7 +173,7 @@ Useful presets:
 | --- | --- |
 | Soft window light | Higher `rayThickness`, low `beamFocus`, low `rayCount`, medium `raySpread`. |
 | Underwater shafts | Medium `rayThickness`, lower `raySpeed`, orbit motion, higher `raySpread`. |
-| Disco lasers | Very low `rayThickness`, high `beamFocus`, higher `intensity`, linear motion. |
+| Disco lasers | Very low `rayThickness`, high `beamFocus`, higher `rayBrightness`, longer `rayLength`, linear motion. |
 
 ---
 

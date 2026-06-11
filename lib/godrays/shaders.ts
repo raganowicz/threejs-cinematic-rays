@@ -24,6 +24,8 @@ uniform float uRaySpeed;
 uniform float uRayDirection;
 uniform float uBeamFocus;
 uniform float uRaySpread;
+uniform float uRayLength;
+uniform float uRayBrightness;
 uniform float uRayThickness;
 uniform int uRayCount;
 uniform float uRaySeed;
@@ -57,15 +59,17 @@ void main() {
   vec2 rayNormal = vec2(-rayDir.y, rayDir.x);
   float pointAngle = atan(toPoint.y, toPoint.x);
   float sourceDistance = length(toPoint);
+  float rayLength = max(uRayLength, 0.05);
+  float rayLengthT = clamp01((rayLength - 0.05) / 3.95);
 
   float depth = dot(toPoint, rayDir);
   float cross = dot(toPoint, rayNormal);
   float falloffDepth = max(depth - 1.85, 0.0);
 
   float entryFade = smoothstep(-0.12, 0.25, depth);
-  float depthFade = 1.0 - smoothstep(1.55, 2.55, depth);
-  float distanceFalloff = exp(-falloffDepth * 0.72);
-  float floorFade = smoothstep(0.16, 0.56, uv.y);
+  float depthFade = 1.0 - smoothstep(mix(0.65, 4.8, rayLengthT), mix(1.05, 6.8, rayLengthT), depth);
+  float distanceFalloff = exp(-falloffDepth * mix(1.0, 0.035, rayLengthT));
+  float floorFade = mix(smoothstep(0.16, 0.56, uv.y), 1.0, smoothstep(0.18, 0.72, rayLengthT));
   float topRightFade = smoothstep(-0.15, 0.78, uv.y) * smoothstep(-0.2, 0.85, uv.x);
 
   float broadWash = exp(-abs(cross - 0.12) * 0.58);
@@ -86,7 +90,7 @@ void main() {
     float angleOffset = (staticOffset + (drift + counterDrift) * 0.28) * uRaySpread;
     float wrapFade = 1.0;
     float baseWidth = mix(0.018, 0.072, hash(fi * 3.71 + 8.0 + uRaySeed * 0.17));
-    float width = max((baseWidth * uRayThickness) / uBeamFocus, 0.01);
+    float width = max((baseWidth * uRayThickness) / max(uBeamFocus, 0.05), 0.00075);
     float microSpread = mix(-0.024, 0.024, hash(fi * 9.7 + 0.8 + uRaySeed * 0.31));
     float beamAngle = uAngle + angleOffset + microSpread;
     float angleDelta = angularDistance(pointAngle, beamAngle);
@@ -102,14 +106,17 @@ void main() {
 
     float softness = 0.82 + 0.18 * sin(t * (0.08 + seed * 0.08) + fi * 1.4);
     float localEntryFade = smoothstep(-0.12, 0.25, localDepth);
-    float rayFalloff = exp(-max(localDepth - 1.85, 0.0) * mix(0.44, 0.68, seed));
+    float tailStart = mix(0.35, 9.2, rayLengthT);
+    float tailSoftness = mix(0.16, 3.8, rayLengthT);
+    float rayTailFade = 1.0 - smoothstep(tailStart, tailStart + tailSoftness, max(localDepth, 0.0));
+    float rayFalloff = rayTailFade;
     float pulse = 0.94 + 0.06 * sin(t * (0.08 + seed * 0.08) + fi * 1.9);
     float rayStrength = mix(0.1, 0.46, hash(fi * 5.33 + 3.3 + uRaySeed * 0.23));
 
     shafts += beam * wrapFade * softness * localEntryFade * floorFade * rayFalloff * pulse * rayStrength;
   }
 
-  shafts = shafts / (1.0 + shafts * 0.42);
+  shafts = (shafts / (1.0 + shafts * 0.42)) * max(uRayBrightness, 0.0);
 
   float surfaceGlow = topRightFade * exp(-falloffDepth * 0.62) * 0.08;
   float atmosphere = broadWash * 0.12 + shafts * 0.2 + surfaceGlow;

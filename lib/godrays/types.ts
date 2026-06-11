@@ -25,6 +25,8 @@ export interface GodRaysOptions {
   rayDepthMode?: number;
   beamFocus?: number;
   raySpread?: number;
+  rayLength?: number;
+  rayBrightness?: number;
   rayThickness?: number;
   rayCount?: number;
   raySeed?: number;
@@ -66,6 +68,8 @@ export const DEFAULT_GODRAYS_OPTIONS: GodraysSceneOptions = {
     rayDepthMode: 2,
     beamFocus: 1.0,
     raySpread: 1.18,
+    rayLength: 1.4,
+    rayBrightness: 1.0,
     rayThickness: 0.32,
     rayCount: 10,
   },
@@ -83,6 +87,8 @@ export const DEFAULT_GODRAYS_OPTIONS: GodraysSceneOptions = {
     rayDepthMode: 2,
     beamFocus: 1.0,
     raySpread: 1.18,
+    rayLength: 1.4,
+    rayBrightness: 1.0,
     rayThickness: 0.32,
     rayCount: 10,
   },

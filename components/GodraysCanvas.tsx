@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import GUI from "lil-gui";
 import Stats from "stats.js";
 import { Vector2, Vector3 } from "three";
@@ -35,6 +35,10 @@ const hexToVector3 = (hex: string): Vector3 => {
 
 export function GodraysCanvas() {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [heroText, setHeroText] = useState({
+    color: "#EB6137",
+    visible: true,
+  });
 
   useEffect(() => {
     const mount = containerRef.current;
@@ -100,6 +104,24 @@ export function GodraysCanvas() {
         });
       });
 
+      const textState = {
+        color: "#EB6137",
+        visible: true,
+      };
+      const textFolder = gui.addFolder("Text");
+      textFolder.add(textState, "visible").name("visible").onChange((value: boolean) => {
+        setHeroText((current) => ({
+          ...current,
+          visible: value,
+        }));
+      });
+      textFolder.addColor(textState, "color").name("color").onChange((value: string) => {
+        setHeroText((current) => ({
+          ...current,
+          color: value,
+        }));
+      });
+
       const updateLayerOption = (
         layerKey: "backgroundLayer" | "foregroundLayer",
         patch: Partial<NonNullable<GodraysSceneOptions["backgroundLayer"]>>,
@@ -153,6 +175,12 @@ export function GodraysCanvas() {
         }
         if (typeof layer.raySpread !== "number") {
           layer.raySpread = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.raySpread ?? 1.0;
+        }
+        if (typeof layer.rayLength !== "number") {
+          layer.rayLength = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayLength ?? 1.4;
+        }
+        if (typeof layer.rayBrightness !== "number") {
+          layer.rayBrightness = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayBrightness ?? 1.0;
         }
         if (typeof layer.rayThickness !== "number") {
           layer.rayThickness = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayThickness ?? 1.0;
@@ -212,6 +240,12 @@ export function GodraysCanvas() {
         folder.add(layer, "raySpread", 0.2, 3, 0.01).name("ray spread").onChange((value: number) => {
           updateLayerOption(layerKey, { raySpread: value });
         });
+        folder.add(layer, "rayLength", 0.05, 4, 0.01).name("ray length").onChange((value: number) => {
+          updateLayerOption(layerKey, { rayLength: value });
+        });
+        folder.add(layer, "rayBrightness", 0, 8, 0.01).name("ray brightness").onChange((value: number) => {
+          updateLayerOption(layerKey, { rayBrightness: value });
+        });
         folder.add(layer, "rayThickness", 0.005, 4, 0.001).name("ray thickness").onChange((value: number) => {
           updateLayerOption(layerKey, { rayThickness: value });
         });
@@ -242,5 +276,17 @@ export function GodraysCanvas() {
     };
   }, []);
 
-  return <div ref={containerRef} className="fixed inset-0 h-screen w-screen overflow-hidden" />;
+  return (
+    <div ref={containerRef} className="fixed inset-0 h-screen w-screen overflow-hidden">
+      <h1
+        className="hero-godrays-title"
+        style={{
+          color: heroText.color,
+          opacity: heroText.visible ? 1 : 0,
+        }}
+      >
+        HERO GOD RAYS
+      </h1>
+    </div>
+  );
 }
