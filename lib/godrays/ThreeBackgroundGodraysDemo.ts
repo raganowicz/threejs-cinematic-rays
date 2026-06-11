@@ -204,8 +204,8 @@ export class SpatialGodRays {
 
   constructor(options: GodRaysOptions) {
     this.options = options;
-    this.createSheet(options.z ?? -0.9, 0, 1, true);
-    this.createSheet(0.45, 0.31, 0.62, false);
+    this.createSheet(options.z ?? -1.8, 0, 1, true);
+    this.createSheet(options.frontZ ?? 0.45, 0.31, 0.62, false);
     this.applyOptions(options);
   }
 
@@ -250,6 +250,13 @@ export class SpatialGodRays {
     };
     const color = this.options.color ?? new Vector3(0.612, 0.639, 0.651);
     const origin = this.options.origin ?? new Vector2(1.48, 1.86);
+    const backZ = this.sanitize(this.options.z, -1.8, -10, 10);
+    const frontZ = this.sanitize(this.options.frontZ, 0.45, -10, 10);
+
+    this.sheets[0].position.z = backZ;
+    this.sheets[0].renderOrder = backZ < 0 ? 0 : 2;
+    this.sheets[1].position.z = frontZ;
+    this.sheets[1].renderOrder = frontZ < 0 ? 0 : 2;
 
     for (const material of this.materials) {
       material.uniforms.uIntensity.value = this.sanitize(this.options.intensity, 0.75, 0, 10);

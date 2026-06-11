@@ -26,6 +26,7 @@ export interface GodRaysOptions {
   origin?: Vector2;
   visible?: boolean;
   z?: number;
+  frontZ?: number;
   raySpeed?: number;
   rayDirection?: number;
   rayMotion?: number;
@@ -70,7 +71,8 @@ export const DEFAULT_GODRAYS_OPTIONS: GodraysSceneOptions = {
     opacity: 0.58,
     origin: DEFAULT_RAY_ORIGIN.clone(),
     visible: true,
-    z: -0.9,
+    z: -1.8,
+    frontZ: 0.45,
     raySpeed: 0.62,
     rayDirection: -1,
     rayMotion: 2,
@@ -90,6 +92,7 @@ export const DEFAULT_GODRAYS_OPTIONS: GodraysSceneOptions = {
     origin: DEFAULT_RAY_ORIGIN.clone(),
     visible: true,
     z: 0.48,
+    frontZ: 0.45,
     raySpeed: 0.62,
     rayDirection: -1,
     rayMotion: 2,

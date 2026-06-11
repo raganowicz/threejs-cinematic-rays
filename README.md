@@ -67,7 +67,7 @@ pnpm add three
 pnpm add lil-gui stats.js
 ```
 
-3. Use the spatial 3D rays when you want light beams that can exist behind/in front of meshes and be reflected by reflective materials:
+3. Use `SpatialGodRays` when you want light beams that exist in your Three.js scene, can sit behind or in front of meshes, and can be captured by reflective materials:
 
 ```ts
 import { PerspectiveCamera, Scene, Vector2, Vector3, WebGLRenderer } from "three";
@@ -85,6 +85,8 @@ const godrays = new SpatialGodRays({
   angle: -2.3,
   intensity: 0.75,
   opacity: 0.58,
+  z: -1.8,
+  frontZ: 0.45,
   raySpeed: 0.62,
   rayMotion: 2,
   rayDepthMode: 2,
@@ -120,6 +122,15 @@ window.addEventListener("resize", () => {
   godrays.resize(camera, window.innerWidth, window.innerHeight);
 });
 ```
+
+Integration checklist:
+
+- Add every mesh from `godrays.meshes` to your scene.
+- Call `godrays.update(delta)` every frame before `renderer.render(...)`.
+- Call `godrays.resize(camera, width, height)` after creating it and whenever the viewport changes.
+- Use `z` for the back ray sheet and `frontZ` for the front ray sheet. Larger/deeper models may need a more negative `z` so the behind layer sits behind the model, text, or hero content.
+- Use `rayDepthMode`: `0` only back layer, `1` only front layer, `2` both layers.
+- For reflective objects, use your own cube camera or environment workflow and make sure the ray meshes are visible during the reflection capture.
 
 Use `ThreeBackgroundGodrays` instead if you only need a full-screen background/foreground overlay and do not need spatial reflections.
 
@@ -157,10 +168,11 @@ Use this project for controllable visual mood and product/landing-page art direc
 | `intensity` | `number` | `0.75` | Brightness of the ray light contribution. |
 | `angle` | `number` | `-2.3` | Main ray direction in radians. |
 | `origin` | `Vector2` | `(1.48, 1.86)` | Source position in normalized screen-like coordinates. Values can be outside `0..1`. |
-| `z` | `number` | `-0.9` | Back ray sheet depth. |
+| `z` | `number` | `-1.8` | Back ray sheet depth. In the demo this sits behind both the model and hero text. |
+| `frontZ` | `number` | `0.45` | Front ray sheet depth. Tune this when your model is larger/smaller or when foreground rays should sit closer/farther from the camera. |
 | `raySpeed` | `number` | `0.62` | Animation speed. Safe to tweak live; it does not jump the phase. |
 | `rayMotion` | `0 \| 1 \| 2 \| 3` | `2` | `0` linear top-to-bottom, `1` linear bottom-to-top, `2` orbit clockwise, `3` orbit counterclockwise. |
-| `rayDepthMode` | `0 \| 1 \| 2` | `2` | `0` behind model, `1` in front of model, `2` both. |
+| `rayDepthMode` | `0 \| 1 \| 2` | `2` | `0` behind model/text, `1` in front of model, `2` both. |
 | `rayCount` | `number` | `10` | Number of separate ray lanes. Range is clamped to `1..32`. |
 | `raySpread` | `number` | `1.18` | Distance between ray lanes. Higher values place beams farther apart. |
 | `rayLength` | `number` | `1.4` | Controls where each shaft fades out and how far the spatial ray sheets extend beyond the viewport. Higher values push the fade past the screen edge. Recommended range: `0.05..4` in `0.01` steps. |
