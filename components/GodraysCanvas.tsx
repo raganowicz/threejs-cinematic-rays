@@ -103,6 +103,12 @@ export function GodraysCanvas() {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    console.log(
+      "%cThree.js Cinematic Rays\n%cBY PIOTR RAGANOWICZ-MACINA © 2026",
+      "font-size:14px;font-weight:700",
+      "font-size:11px;letter-spacing:0.12em",
+    );
+
     const mount = containerRef.current;
 
     if (!mount) {
