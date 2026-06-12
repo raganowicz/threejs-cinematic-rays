@@ -1,48 +1,20 @@
 import {
-  ACESFilmicToneMapping,
   AddEquation,
-  AmbientLight,
-  BackSide,
-  CanvasTexture,
-  Clock,
-  Color,
-  CubeCamera,
   CustomBlending,
-  HemisphereLight,
-  LinearFilter,
   Mesh,
-  MeshBasicMaterial,
-  MeshPhysicalMaterial,
   OneFactor,
   PerspectiveCamera,
   PlaneGeometry,
-  Scene,
   ShaderMaterial,
-  SRGBColorSpace,
-  SphereGeometry,
   SrcAlphaFactor,
-  TorusKnotGeometry,
   Vector2,
   Vector3,
-  WebGLCubeRenderTarget,
-  WebGLRenderer,
   ZeroFactor,
+  Color,
 } from "three";
-import {
-  DEFAULT_GODRAYS_OPTIONS,
-  type GodRaysOptions,
-  type GodraysHeroTextOptions,
-  type GodraysOptionsPatch,
-  type GodraysSceneOptions,
-} from "./types";
+import type { GodRaysOptions } from "./types";
 
-interface ThreeBackgroundGodraysDemoConfig {
-  mount: HTMLElement;
-  options?: GodraysOptionsPatch;
-  pixelRatio?: number;
-}
-
-const GODRAYS_3D_VERTEX_SHADER = /* glsl */ `
+const VERTEX_SHADER = /* glsl */ `
 varying vec2 vUv;
 
 void main() {
@@ -51,7 +23,7 @@ void main() {
 }
 `;
 
-const GODRAYS_3D_FRAGMENT_SHADER = /* glsl */ `
+const FRAGMENT_SHADER = /* glsl */ `
 precision highp float;
 
 varying vec2 vUv;
@@ -65,13 +37,17 @@ uniform float uAngle;
 uniform float uRaySpeed;
 uniform float uRayDirection;
 uniform int uRayMotion;
-uniform float uBeamFocus;
 uniform float uRaySpread;
 uniform float uRayLength;
 uniform float uRayBrightness;
 uniform float uRayThickness;
+uniform float uRaySoftness;
 uniform int uRayCount;
 uniform float uRaySeed;
+uniform float uRayPulse;
+uniform float uRayPulseSpeed;
+uniform float uRayPulseAmount;
+uniform float uRayPulseStagger;
 uniform vec2 uOrigin;
 uniform vec3 uColor;
 uniform vec3 uBgColor;
@@ -92,6 +68,15 @@ float dither(vec2 p) {
   return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
 }
 
+float pulseReveal(float phase) {
+  if (uRayPulse < 0.5) {
+    return 1.0;
+  }
+
+  float wave = 0.5 + 0.5 * sin((uTime + uRaySeed * 0.37) * 0.62 * uRayPulseSpeed + phase);
+  return mix(1.0, smoothstep(0.06, 0.94, wave), uRayPulseAmount);
+}
+
 void main() {
   vec2 uv = (vUv - 0.5) * uSheetOverscan + 0.5;
   float t = (uTime + uRaySeed * 0.37) * 0.62;
@@ -105,7 +90,7 @@ void main() {
   float pointAngle = atan(toPoint.y, toPoint.x);
   float sourceDistance = length(toPoint);
   float rayLength = max(uRayLength, 0.05);
-  float rayLengthT = clamp01((rayLength - 0.05) / 1.95);
+  float rayLengthT = clamp01((rayLength - 0.05) / 3.95);
 
   float depth = dot(toPoint, rayDir);
   float cross = dot(toPoint, rayNormal);
@@ -120,6 +105,7 @@ void main() {
   float broadWash = exp(-abs(cross - 0.1) * 0.72);
   broadWash *= entryFade * (0.34 + 0.66 * depthFade) * (0.5 + 0.5 * distanceFalloff) * (0.2 + 0.8 * floorFade);
   broadWash *= 0.98 + 0.02 * sin(t * 0.12);
+  broadWash *= pulseReveal(0.0);
 
   float shafts = 0.0;
   float rayCountF = max(float(uRayCount), 1.0);
@@ -147,19 +133,20 @@ void main() {
     float wrapFade = smoothstep(-0.72 * uRaySpread, -0.54 * uRaySpread, angleOffset) *
       (1.0 - smoothstep(0.42 * uRaySpread, 0.58 * uRaySpread, angleOffset));
     float thickness = max(uRayThickness, 0.005);
+    float edgeSoftness = max(uRaySoftness, 0.1);
     float baseWidth = mix(0.024, 0.07, hash(fi * 3.71 + 8.0 + uRaySeed * 0.17));
-    float width = max((baseWidth * thickness) / max(uBeamFocus, 0.05), 0.00075);
+    float width = max(baseWidth * thickness, 0.00075);
     float microSpread = mix(-0.018, 0.018, hash(fi * 9.7 + 0.8 + uRaySeed * 0.31));
     float beamAngle = uAngle + angleOffset + microSpread;
     float angleDelta = angularDistance(pointAngle, beamAngle);
     float localDepth = sourceDistance * cos(angleDelta);
 
     float distanceToBeam = angleDelta / width;
-    float beam = exp(-distanceToBeam * distanceToBeam);
+    float beam = exp(-pow(distanceToBeam, 2.0 / edgeSoftness));
     float companionSeed = hash(fi * 10.13 + 2.6 + uRaySeed * 0.59);
     float companionAngle = angleOffset + mix(-0.1, 0.1, companionSeed) * uRaySpread;
     float companionDistance = angularDistance(pointAngle, uAngle + companionAngle) / (width * mix(0.75, 1.2, companionSeed));
-    float companion = exp(-companionDistance * companionDistance) * smoothstep(0.58, 0.98, companionSeed) * 0.18;
+    float companion = exp(-pow(companionDistance, 2.0 / edgeSoftness)) * smoothstep(0.58, 0.98, companionSeed) * 0.18;
     beam += companion;
 
     float softness = 0.92 + 0.08 * sin(t * (0.04 + seed * 0.05) + fi * 1.4);
@@ -171,7 +158,8 @@ void main() {
     float pulse = 0.98 + 0.02 * sin(t * (0.05 + seed * 0.05) + fi * 1.9);
     float rayStrength = mix(0.22, 0.68, hash(fi * 5.33 + 3.3 + uRaySeed * 0.23));
 
-    shafts += beam * wrapFade * softness * localEntryFade * sourceFade * floorFade * rayFalloff * pulse * rayStrength;
+    float rayReveal = pulseReveal(fi * uRayPulseStagger);
+    shafts += beam * wrapFade * softness * localEntryFade * sourceFade * floorFade * rayFalloff * pulse * rayStrength * rayReveal;
   }
 
   shafts = (shafts / (1.0 + shafts * 0.52)) * max(uRayBrightness, 0.0);
@@ -237,7 +225,7 @@ export class SpatialGodRays {
   }
 
   setVisible(visible: boolean): void {
-    const depthMode = this.options.rayDepthMode ?? 2;
+    const depthMode = Math.floor(this.sanitize(this.options.rayDepthMode, 2, 0, 2));
 
     this.sheets[0].visible = visible && depthMode !== 1;
     this.sheets[1].visible = visible && depthMode !== 0;
@@ -252,25 +240,36 @@ export class SpatialGodRays {
     const origin = this.options.origin ?? new Vector2(1.48, 1.86);
     const backZ = this.sanitize(this.options.z, -1.8, -10, 10);
     const frontZ = this.sanitize(this.options.frontZ, 0.45, -10, 10);
+    const depthMode = Math.floor(this.sanitize(this.options.rayDepthMode, 2, 0, 2));
+    const totalRayCount = Math.floor(this.sanitize(this.options.rayCount, 8, 1, 32));
+    const rayCounts = depthMode === 0
+      ? [totalRayCount, 0]
+      : depthMode === 1
+        ? [0, totalRayCount]
+        : [Math.ceil(totalRayCount / 2), Math.floor(totalRayCount / 2)];
 
     this.sheets[0].position.z = backZ;
     this.sheets[0].renderOrder = backZ < 0 ? 0 : 2;
     this.sheets[1].position.z = frontZ;
     this.sheets[1].renderOrder = frontZ < 0 ? 0 : 2;
 
-    for (const material of this.materials) {
+    for (const [index, material] of this.materials.entries()) {
       material.uniforms.uIntensity.value = this.sanitize(this.options.intensity, 0.75, 0, 10);
       material.uniforms.uOpacity.value = this.sanitize(this.options.opacity, 0.58, 0, 1);
       material.uniforms.uAngle.value = this.sanitize(this.options.angle, -2.3, -Math.PI * 2, Math.PI * 2);
       material.uniforms.uRaySpeed.value = this.sanitize(this.options.raySpeed, 0.62, 0, 10);
       material.uniforms.uRayDirection.value = this.options.rayDirection ?? -1;
-      material.uniforms.uRayMotion.value = this.options.rayMotion ?? 2;
-      material.uniforms.uBeamFocus.value = this.sanitize(this.options.beamFocus, 1, 0.05, 16);
+      material.uniforms.uRayMotion.value = this.options.rayMotion ?? 0;
       material.uniforms.uRaySpread.value = this.sanitize(this.options.raySpread, 1, 0, 10);
       material.uniforms.uRayLength.value = this.sanitize(this.options.rayLength, 1.4, 0.05, 4);
       material.uniforms.uRayBrightness.value = this.sanitize(this.options.rayBrightness, 1, 0, 8);
       material.uniforms.uRayThickness.value = this.sanitize(this.options.rayThickness, 0.32, 0.005, 10);
-      material.uniforms.uRayCount.value = Math.floor(this.sanitize(this.options.rayCount, 10, 1, 32));
+      material.uniforms.uRaySoftness.value = this.sanitize(this.options.raySoftness, 1, 0.25, 3);
+      material.uniforms.uRayCount.value = rayCounts[index] ?? 0;
+      material.uniforms.uRayPulse.value = this.options.rayPulse ? 1 : 0;
+      material.uniforms.uRayPulseSpeed.value = this.sanitize(this.options.rayPulseSpeed, 0.35, 0.05, 3);
+      material.uniforms.uRayPulseAmount.value = this.sanitize(this.options.rayPulseAmount, 1, 0, 1);
+      material.uniforms.uRayPulseStagger.value = this.sanitize(this.options.rayPulseStagger, 0.45, 0, 2);
       material.uniforms.uOrigin.value.copy(origin);
       material.uniforms.uColor.value.setRGB(color.x, color.y, color.z);
       material.uniforms.uAspect.value = this.lastAspect;
@@ -281,6 +280,14 @@ export class SpatialGodRays {
     }
 
     this.setVisible(this.options.visible ?? true);
+  }
+
+  dispose(): void {
+    this.geometry.dispose();
+
+    for (const material of this.materials) {
+      material.dispose();
+    }
   }
 
   private sanitize(value: number | undefined, fallback: number, min: number, max: number): number {
@@ -316,19 +323,11 @@ export class SpatialGodRays {
     }
   }
 
-  dispose(): void {
-    this.geometry.dispose();
-
-    for (const material of this.materials) {
-      material.dispose();
-    }
-  }
-
   private createSheet(z: number, seedOffset: number, energy: number, depthTest: boolean): void {
     const color = this.options.color ?? new Vector3(0.612, 0.639, 0.651);
     const material = new ShaderMaterial({
-      vertexShader: GODRAYS_3D_VERTEX_SHADER,
-      fragmentShader: GODRAYS_3D_FRAGMENT_SHADER,
+      vertexShader: VERTEX_SHADER,
+      fragmentShader: FRAGMENT_SHADER,
       uniforms: {
         uTime: { value: 0 },
         uIntensity: { value: (this.options.intensity ?? 0.75) * energy },
@@ -338,14 +337,18 @@ export class SpatialGodRays {
         uAngle: { value: this.options.angle ?? -2.3 },
         uRaySpeed: { value: this.options.raySpeed ?? 0.62 },
         uRayDirection: { value: this.options.rayDirection ?? -1 },
-        uRayMotion: { value: this.options.rayMotion ?? 2 },
-        uBeamFocus: { value: this.options.beamFocus ?? 1 },
+        uRayMotion: { value: this.options.rayMotion ?? 0 },
         uRaySpread: { value: this.options.raySpread ?? 1 },
         uRayLength: { value: this.options.rayLength ?? 1.4 },
         uRayBrightness: { value: this.options.rayBrightness ?? 1 },
         uRayThickness: { value: this.options.rayThickness ?? 0.32 },
-        uRayCount: { value: Math.floor(this.options.rayCount ?? 10) },
+        uRaySoftness: { value: this.options.raySoftness ?? 1 },
+        uRayCount: { value: Math.floor(this.options.rayCount ?? 8) },
         uRaySeed: { value: 17.13 + seedOffset },
+        uRayPulse: { value: this.options.rayPulse ? 1 : 0 },
+        uRayPulseSpeed: { value: this.options.rayPulseSpeed ?? 0.35 },
+        uRayPulseAmount: { value: this.options.rayPulseAmount ?? 1 },
+        uRayPulseStagger: { value: this.options.rayPulseStagger ?? 0.45 },
         uOrigin: { value: (this.options.origin ?? new Vector2(1.48, 1.86)).clone() },
         uColor: { value: new Color(color.x, color.y, color.z) },
         uBgColor: { value: new Vector3(0.118, 0.133, 0.149) },
@@ -369,276 +372,5 @@ export class SpatialGodRays {
     sheet.renderOrder = z < 0 ? 0 : 2;
     this.sheets.push(sheet);
     this.materials.push(material);
-  }
-}
-
-export class ThreeBackgroundGodraysDemo {
-  readonly renderer: WebGLRenderer;
-
-  private readonly scene = new Scene();
-  private readonly camera = new PerspectiveCamera(30, 1, 0.1, 100);
-  private readonly clock = new Clock();
-  private readonly raySheets: SpatialGodRays;
-  private readonly ambientLight = new AmbientLight(0xd8e5f6, 1.18);
-  private readonly hemisphereLight = new HemisphereLight(0xf4f8ff, 0x27354a, 0.92);
-  private readonly backdropGeometry = new SphereGeometry(60, 32, 16);
-  private readonly backdropMaterial = new MeshBasicMaterial({
-    color: new Color(DEFAULT_GODRAYS_OPTIONS.background.color),
-    side: BackSide,
-    depthWrite: false,
-    toneMapped: false,
-  });
-  private readonly backdropMesh = new Mesh(this.backdropGeometry, this.backdropMaterial);
-  private readonly reflectionTarget = new WebGLCubeRenderTarget(256, {
-    generateMipmaps: true,
-    minFilter: LinearFilter,
-    magFilter: LinearFilter,
-  });
-  private readonly reflectionCamera = new CubeCamera(0.1, 30, this.reflectionTarget);
-  private readonly demoKnot: Mesh<TorusKnotGeometry, MeshPhysicalMaterial>;
-  private readonly heroTextGeometry = new PlaneGeometry(11.2, 2.72);
-  private readonly heroTextMaterial = new MeshBasicMaterial({
-    transparent: true,
-    depthTest: true,
-    depthWrite: false,
-    toneMapped: false,
-  });
-  private readonly heroTextMesh = new Mesh(this.heroTextGeometry, this.heroTextMaterial);
-  private heroTextTexture?: CanvasTexture;
-  private heroTextFontRefreshId = 0;
-  private options: GodraysSceneOptions;
-
-  constructor(config: ThreeBackgroundGodraysDemoConfig) {
-    this.options = {
-      background: {
-        ...DEFAULT_GODRAYS_OPTIONS.background,
-        ...config.options?.background,
-      },
-      backgroundLayer: {
-        ...DEFAULT_GODRAYS_OPTIONS.backgroundLayer,
-        ...config.options?.backgroundLayer,
-      },
-      foregroundLayer: {
-        ...DEFAULT_GODRAYS_OPTIONS.foregroundLayer,
-        ...config.options?.foregroundLayer,
-      },
-      model: {
-        ...(DEFAULT_GODRAYS_OPTIONS.model ?? { visible: true }),
-        ...config.options?.model,
-      },
-      heroText: {
-        ...(DEFAULT_GODRAYS_OPTIONS.heroText ?? {
-          color: "#EB6137",
-          fontFamily: "Humane-Regular",
-          text: "HERO GOD RAYS",
-          visible: true,
-        }),
-        ...config.options?.heroText,
-      },
-    };
-
-    this.renderer = new WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      precision: "highp",
-      powerPreference: "high-performance",
-    });
-    this.renderer.setPixelRatio(config.pixelRatio ?? Math.min(window.devicePixelRatio, 1.75));
-    this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.08;
-    this.renderer.domElement.style.display = "block";
-    this.renderer.domElement.style.width = "100%";
-    this.renderer.domElement.style.height = "100%";
-
-    this.camera.position.set(0, 0, 4.9);
-    this.camera.lookAt(0, 0, 0);
-
-    this.raySheets = new SpatialGodRays(this.options.backgroundLayer);
-    const knotMaterial = new MeshPhysicalMaterial({
-      color: new Color("#ffffff"),
-      metalness: 1,
-      roughness: 0.006,
-      envMapIntensity: 1,
-      envMap: this.reflectionTarget.texture,
-    });
-    this.demoKnot = new Mesh(new TorusKnotGeometry(0.5, 0.13, 180, 24), knotMaterial);
-    this.demoKnot.geometry.center();
-    this.demoKnot.scale.setScalar(0.8);
-    this.demoKnot.position.set(0, 0, 0);
-    this.demoKnot.visible = this.options.model?.visible ?? true;
-    this.demoKnot.renderOrder = 1;
-    this.heroTextMesh.position.set(0, -0.02, -1.15);
-    this.heroTextMesh.renderOrder = 0;
-    this.applyHeroText();
-
-    this.scene.add(this.backdropMesh);
-    for (const sheet of this.raySheets.meshes) {
-      this.scene.add(sheet);
-    }
-    this.scene.add(this.ambientLight);
-    this.scene.add(this.hemisphereLight);
-    this.scene.add(this.heroTextMesh);
-    this.scene.add(this.demoKnot);
-    this.scene.add(this.reflectionCamera);
-
-    this.applyBackground();
-
-    config.mount.appendChild(this.renderer.domElement);
-    this.setSize(config.mount.clientWidth, config.mount.clientHeight);
-  }
-
-  setSize(width: number, height: number): void {
-    const safeWidth = Math.max(width, window.innerWidth, 1);
-    const safeHeight = Math.max(height, window.innerHeight, 1);
-
-    this.camera.aspect = safeWidth / safeHeight;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(safeWidth, safeHeight, true);
-    this.raySheets.resize(this.camera, safeWidth, safeHeight);
-  }
-
-  render(): void {
-    const delta = Math.min(this.clock.getDelta(), 0.05);
-
-    this.raySheets.update(delta);
-    this.updateDynamicReflection();
-    this.demoKnot.rotation.x += delta * 0.22;
-    this.demoKnot.rotation.y += delta * 0.28;
-    this.demoKnot.rotation.z += delta * 0.06;
-    this.renderer.render(this.scene, this.camera);
-  }
-
-  updateOptions(options: GodraysOptionsPatch): void {
-    if (options.background) {
-      this.options.background = {
-        ...this.options.background,
-        ...options.background,
-      };
-      this.applyBackground();
-    }
-
-    if (options.backgroundLayer) {
-      this.options.backgroundLayer = {
-        ...this.options.backgroundLayer,
-        ...options.backgroundLayer,
-      };
-      this.raySheets.applyOptions(this.options.backgroundLayer);
-    }
-
-    if (options.model) {
-      const modelOptions = this.options.model ?? { visible: true };
-      this.options.model = {
-        ...modelOptions,
-        ...options.model,
-      };
-      this.demoKnot.visible = this.options.model.visible ?? true;
-    }
-
-    if (options.heroText) {
-      const heroTextOptions = this.options.heroText ?? DEFAULT_GODRAYS_OPTIONS.heroText;
-      this.options.heroText = {
-        ...heroTextOptions,
-        ...options.heroText,
-      } as GodraysHeroTextOptions;
-      this.applyHeroText();
-    }
-  }
-
-  dispose(): void {
-    this.raySheets.dispose();
-    this.reflectionTarget.dispose();
-    this.backdropGeometry.dispose();
-    this.backdropMaterial.dispose();
-    this.demoKnot.geometry.dispose();
-    this.demoKnot.material.dispose();
-    this.heroTextTexture?.dispose();
-    this.heroTextGeometry.dispose();
-    this.heroTextMaterial.dispose();
-    this.renderer.dispose();
-    this.renderer.domElement.remove();
-  }
-
-  private applyHeroText(): void {
-    const textOptions = this.options.heroText ?? DEFAULT_GODRAYS_OPTIONS.heroText;
-
-    if (!textOptions) {
-      this.heroTextMesh.visible = false;
-      return;
-    }
-
-    this.heroTextMesh.visible = textOptions.visible;
-    this.updateHeroTextTexture(textOptions);
-
-    const fontSet = document.fonts;
-    if (fontSet) {
-      const refreshId = ++this.heroTextFontRefreshId;
-      fontSet.load(`400 664px "${textOptions.fontFamily}"`).then(() => {
-        const latestTextOptions = this.options.heroText ?? DEFAULT_GODRAYS_OPTIONS.heroText;
-
-        if (latestTextOptions && refreshId === this.heroTextFontRefreshId) {
-          this.updateHeroTextTexture(latestTextOptions);
-        }
-      });
-    }
-  }
-
-  private updateHeroTextTexture(options: GodraysHeroTextOptions): void {
-    this.heroTextTexture?.dispose();
-    this.heroTextTexture = this.createHeroTextTexture(options);
-    this.heroTextMaterial.map = this.heroTextTexture;
-    this.heroTextMaterial.needsUpdate = true;
-  }
-
-  private createHeroTextTexture(options: GodraysHeroTextOptions): CanvasTexture {
-    const canvas = document.createElement("canvas");
-    const width = 4096;
-    const height = 1024;
-    const context = canvas.getContext("2d");
-
-    canvas.width = width;
-    canvas.height = height;
-
-    if (!context) {
-      return new CanvasTexture(canvas);
-    }
-
-    context.clearRect(0, 0, width, height);
-    context.fillStyle = options.color;
-    context.font = `400 664px "${options.fontFamily}"`;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(options.text, width / 2, height / 2 + 48);
-
-    const texture = new CanvasTexture(canvas);
-    texture.colorSpace = SRGBColorSpace;
-    texture.needsUpdate = true;
-
-    return texture;
-  }
-
-  private updateDynamicReflection(): void {
-    const modelVisible = this.demoKnot.visible;
-    const heroTextVisible = this.heroTextMesh.visible;
-
-    this.demoKnot.visible = false;
-    this.heroTextMesh.visible = false;
-    this.reflectionCamera.position.copy(this.demoKnot.position);
-    this.reflectionCamera.update(this.renderer, this.scene);
-    this.demoKnot.visible = modelVisible;
-    this.heroTextMesh.visible = heroTextVisible;
-  }
-
-  private applyBackground(): void {
-    if (this.options.background.transparent) {
-      this.scene.background = null;
-      this.backdropMesh.visible = false;
-      this.renderer.setClearColor(0x000000, 0);
-    } else {
-      const color = new Color(this.options.background.color);
-      this.scene.background = color;
-      this.backdropMaterial.color.copy(color);
-      this.backdropMesh.visible = true;
-      this.renderer.setClearColor(color, 1);
-    }
   }
 }

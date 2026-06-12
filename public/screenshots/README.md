@@ -1,4 +1,5 @@
-Place screenshot files for the README here:
+Drop media here for the README:
 
-- default.png
-- debug.png
+- `preset-cinematic.png` — default / hero
+- `preset-soft.png` — soft window light look
+- `preset-pulse.gif` or `preset-pulse.mp4` — pulse reveal animation

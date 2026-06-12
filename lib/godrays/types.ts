@@ -31,19 +31,23 @@ export interface GodRaysOptions {
   rayDirection?: number;
   rayMotion?: number;
   rayDepthMode?: number;
-  beamFocus?: number;
   raySpread?: number;
   rayLength?: number;
   rayBrightness?: number;
   rayThickness?: number;
+  raySoftness?: number;
   rayCount?: number;
   raySeed?: number;
+  rayPulse?: boolean;
+  rayPulseSpeed?: number;
+  rayPulseAmount?: number;
+  rayPulseStagger?: number;
 }
 
 export interface GodraysSceneOptions {
   background: GodraysBackgroundOptions;
   backgroundLayer: GodRaysOptions;
-  foregroundLayer: GodRaysOptions;
+  foregroundLayer?: GodRaysOptions;
   model?: GodraysModelOptions;
   heroText?: GodraysHeroTextOptions;
 }
@@ -58,82 +62,79 @@ export interface GodraysOptionsPatch {
 
 const DEFAULT_RAY_ANGLE = -2.3;
 const DEFAULT_RAY_ORIGIN = new Vector2(1.48, 1.86);
+const DEFAULT_RAY_COLOR = new Vector3(0.612, 0.639, 0.651);
 
+export const FALLBACK_BACKGROUND: GodraysBackgroundOptions = {
+  transparent: false,
+  color: "#0a0d15",
+};
+
+export const FALLBACK_RAY_OPTIONS: GodRaysOptions = {
+  color: DEFAULT_RAY_COLOR,
+  angle: DEFAULT_RAY_ANGLE,
+  intensity: 0.75,
+  opacity: 0.58,
+  origin: DEFAULT_RAY_ORIGIN.clone(),
+  visible: true,
+  z: -1.8,
+  frontZ: 0.45,
+  raySpeed: 0.62,
+  rayDirection: -1,
+  rayMotion: 0,
+  rayDepthMode: 2,
+  raySpread: 0.82,
+  rayLength: 1.4,
+  rayBrightness: 1.0,
+  rayThickness: 0.42,
+  raySoftness: 1.0,
+  rayCount: 8,
+};
+
+/** Internal fallbacks used when a preset value is missing. */
 export const DEFAULT_GODRAYS_OPTIONS: GodraysSceneOptions = {
-  background: {
-    transparent: false,
-    color: "#0a0d15",
-  },
+  background: { ...FALLBACK_BACKGROUND },
   backgroundLayer: {
-    color: new Vector3(0.612, 0.639, 0.651),
-    angle: DEFAULT_RAY_ANGLE,
-    intensity: 0.75,
-    opacity: 0.58,
+    ...FALLBACK_RAY_OPTIONS,
+    color: DEFAULT_RAY_COLOR.clone(),
     origin: DEFAULT_RAY_ORIGIN.clone(),
-    visible: true,
-    z: -1.8,
-    frontZ: 0.45,
-    raySpeed: 0.62,
-    rayDirection: -1,
-    rayMotion: 2,
-    rayDepthMode: 2,
-    beamFocus: 1.0,
-    raySpread: 1.18,
-    rayLength: 1.4,
-    rayBrightness: 1.0,
-    rayThickness: 0.32,
-    rayCount: 10,
-  },
-  foregroundLayer: {
-    color: new Vector3(0.612, 0.639, 0.651),
-    angle: DEFAULT_RAY_ANGLE,
-    intensity: .8,
-    opacity: 0.54,
-    origin: DEFAULT_RAY_ORIGIN.clone(),
-    visible: true,
-    z: 0.48,
-    frontZ: 0.45,
-    raySpeed: 0.62,
-    rayDirection: -1,
-    rayMotion: 2,
-    rayDepthMode: 2,
-    beamFocus: 1.0,
-    raySpread: 1.18,
-    rayLength: 1.4,
-    rayBrightness: 1.0,
-    rayThickness: 0.32,
-    rayCount: 10,
-  },
-  model: {
-    visible: true,
-  },
-  heroText: {
-    color: "#EB6137",
-    fontFamily: "Humane-Regular",
-    text: "HERO GOD RAYS",
-    visible: true,
   },
 };
 
-export const createDefaultGodraysOptions = (): GodraysSceneOptions => ({
-  background: { ...DEFAULT_GODRAYS_OPTIONS.background },
-  backgroundLayer: {
-    ...DEFAULT_GODRAYS_OPTIONS.backgroundLayer,
-    color: new Vector3(0.612, 0.639, 0.651),
-    angle: DEFAULT_RAY_ANGLE,
-    origin: DEFAULT_RAY_ORIGIN.clone(),
-  },
-  foregroundLayer: {
-    ...DEFAULT_GODRAYS_OPTIONS.foregroundLayer,
-    color: new Vector3(0.612, 0.639, 0.651),
-    angle: DEFAULT_RAY_ANGLE,
-    origin: DEFAULT_RAY_ORIGIN.clone(),
-  },
-  model: { ...(DEFAULT_GODRAYS_OPTIONS.model ?? { visible: true }) },
-  heroText: { ...(DEFAULT_GODRAYS_OPTIONS.heroText ?? {
-    color: "#EB6137",
-    fontFamily: "Humane-Regular",
-    text: "HERO GOD RAYS",
-    visible: true,
-  }) },
-});
+const cloneLayerOptions = (base: GodRaysOptions, patch?: GodRaysOptions): GodRaysOptions => {
+  const merged = { ...base, ...patch };
+  const color = merged.color ?? DEFAULT_RAY_COLOR;
+  const origin = merged.origin ?? DEFAULT_RAY_ORIGIN;
+
+  return {
+    ...merged,
+    color: color.clone(),
+    origin: origin.clone(),
+  };
+};
+
+export const mergeGodraysOptions = (patch: GodraysOptionsPatch = {}): GodraysSceneOptions => {
+  const options: GodraysSceneOptions = {
+    background: { ...FALLBACK_BACKGROUND, ...patch.background },
+    backgroundLayer: cloneLayerOptions(FALLBACK_RAY_OPTIONS, patch.backgroundLayer),
+  };
+
+  if (patch.foregroundLayer) {
+    options.foregroundLayer = cloneLayerOptions(FALLBACK_RAY_OPTIONS, patch.foregroundLayer);
+  }
+
+  if (patch.model) {
+    options.model = { visible: true, ...patch.model };
+  }
+
+  if (patch.heroText) {
+    options.heroText = {
+      color: "#EB6137",
+      fontFamily: "Humane-Regular",
+      text: "",
+      visible: true,
+      ...patch.heroText,
+    };
+  }
+
+  return options;
+};
