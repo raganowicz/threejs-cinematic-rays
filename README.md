@@ -88,13 +88,13 @@ const godrays = new SpatialGodRays({
   z: -1.8,
   frontZ: 0.45,
   raySpeed: 0.62,
-  rayMotion: 2,
+  rayMotion: 0,
   rayDepthMode: 2,
-  rayCount: 10,
-  raySpread: 1.18,
+  rayCount: 8,
+  raySpread: 0.82,
   rayLength: 1.4,
   rayBrightness: 1,
-  rayThickness: 0.32,
+  rayThickness: 0.42,
   raySoftness: 1,
 });
 
@@ -171,13 +171,13 @@ Use this project for controllable visual mood and product/landing-page art direc
 | `z` | `number` | `-1.8` | Back ray sheet depth. In the demo this sits behind both the model and hero text. |
 | `frontZ` | `number` | `0.45` | Front ray sheet depth. Tune this when your model is larger/smaller or when foreground rays should sit closer/farther from the camera. |
 | `raySpeed` | `number` | `0.62` | Animation speed. Safe to tweak live; it does not jump the phase. |
-| `rayMotion` | `0 \| 1 \| 2 \| 3` | `2` | `0` linear top-to-bottom, `1` linear bottom-to-top, `2` orbit clockwise, `3` orbit counterclockwise. |
+| `rayMotion` | `0 \| 1 \| 2 \| 3` | `0` | `0` linear top-to-bottom, `1` linear bottom-to-top, `2` orbit clockwise, `3` orbit counterclockwise. |
 | `rayDepthMode` | `0 \| 1 \| 2` | `2` | `0` behind model/text, `1` in front of model, `2` both. |
-| `rayCount` | `number` | `10` | Number of separate ray lanes. Range is clamped to `1..32`. |
-| `raySpread` | `number` | `1.18` | Distance between ray lanes. Higher values place beams farther apart. |
+| `rayCount` | `number` | `8` | Total number of separate ray lanes across the active depth layers. With `rayDepthMode: 2`, this count is split between back and front sheets instead of doubled. Range is clamped to `1..32`. |
+| `raySpread` | `number` | `0.82` | Distance between ray lanes. Higher values place beams farther apart. |
 | `rayLength` | `number` | `1.4` | Controls where each shaft fades out and how far the spatial ray sheets extend beyond the viewport. Higher values push the fade past the screen edge. Recommended range: `0.05..4` in `0.01` steps. |
 | `rayBrightness` | `number` | `1.0` | Extra multiplier for the shaft/core light only. Higher values with lower `intensity` can create lightsaber-like bright cores with a softer glow. |
-| `rayThickness` | `number` | `0.32` | Beam width. Very low values create focused, laser-like lines. |
+| `rayThickness` | `number` | `0.42` | Beam width. Very low values create focused, laser-like lines. |
 | `raySoftness` | `number` | `1.0` | Edge softness of each beam. Lower values create sharper pillars; higher values create hazier, more diffused rays. |
 | `raySeed` | `number` | random | Per-layer randomization seed. |
 

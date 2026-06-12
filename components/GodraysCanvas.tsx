@@ -7,6 +7,7 @@ import { Vector2, Vector3 } from "three";
 import {
   createDefaultGodraysOptions,
   DEFAULT_GODRAYS_OPTIONS,
+  serializeGodraysPreset,
   ThreeBackgroundGodraysDemo,
   type GodraysSceneOptions,
 } from "@/lib/godrays";
@@ -31,6 +32,72 @@ const hexToVector3 = (hex: string): Vector3 => {
   const b = (parsed & 255) / 255;
 
   return new Vector3(r, g, b);
+};
+
+const makeGuiDraggable = (gui: GUI) => {
+  const root = gui.domElement;
+  const titleBar = gui.$title;
+  let dragPointerId: number | null = null;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let didDrag = false;
+
+  const onPointerMove = (event: PointerEvent) => {
+    if (dragPointerId !== event.pointerId) {
+      return;
+    }
+
+    if (!didDrag) {
+      didDrag = Math.hypot(event.clientX - dragStartX, event.clientY - dragStartY) > 3;
+    }
+
+    root.style.right = "auto";
+    root.style.left = `${event.clientX - dragOffsetX}px`;
+    root.style.top = `${event.clientY - dragOffsetY}px`;
+  };
+
+  const endDrag = (event: PointerEvent) => {
+    if (dragPointerId !== event.pointerId) {
+      return;
+    }
+
+    dragPointerId = null;
+    root.classList.remove("lil-gui--dragging");
+    titleBar.releasePointerCapture(event.pointerId);
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", endDrag);
+    window.removeEventListener("pointercancel", endDrag);
+  };
+
+  titleBar.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    didDrag = false;
+    dragPointerId = event.pointerId;
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+    const rect = root.getBoundingClientRect();
+    dragOffsetX = event.clientX - rect.left;
+    dragOffsetY = event.clientY - rect.top;
+    root.classList.add("lil-gui--dragging");
+    titleBar.setPointerCapture(event.pointerId);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+  });
+
+  titleBar.addEventListener("click", (event) => {
+    if (didDrag) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      didDrag = false;
+    }
+  }, true);
 };
 
 export function GodraysCanvas() {
@@ -65,55 +132,6 @@ export function GodraysCanvas() {
       document.body.appendChild(stats.dom);
 
       gui = new GUI({ title: "Three.js Cinematic Rays" });
-
-      const backgroundFolder = gui.addFolder("Background");
-      backgroundFolder
-        .add(options.background, "transparent")
-        .name("transparent")
-        .onChange((value: boolean) => {
-          godrays.updateOptions({
-            background: {
-              transparent: value,
-            },
-          });
-        });
-
-      backgroundFolder
-        .addColor(options.background, "color")
-        .name("color")
-        .onChange((value: string) => {
-          godrays.updateOptions({
-            background: {
-              color: value,
-            },
-          });
-        });
-
-      const modelState = options.model ?? { visible: true };
-      options.model = modelState;
-      const modelFolder = gui.addFolder("Model");
-      modelFolder.add(modelState, "visible").name("visible").onChange((value: boolean) => {
-        godrays.updateOptions({
-          model: {
-            visible: value,
-          },
-        });
-      });
-
-      const textState = options.heroText ?? {
-        color: "#EB6137",
-        fontFamily: "Humane-Regular",
-        text: "CINEMATIC RAYS",
-        visible: true,
-      };
-      options.heroText = textState;
-      const textFolder = gui.addFolder("Text");
-      textFolder.add(textState, "visible").name("visible").onChange((value: boolean) => {
-        godrays.updateOptions({ heroText: { visible: value } });
-      });
-      textFolder.addColor(textState, "color").name("color").onChange((value: string) => {
-        godrays.updateOptions({ heroText: { color: value } });
-      });
 
       const updateLayerOption = (
         layerKey: "backgroundLayer" | "foregroundLayer",
@@ -200,7 +218,7 @@ export function GodraysCanvas() {
         folder.add(layer, "intensity", 0, 3, 0.01).onChange((value: number) => {
           updateLayerOption(layerKey, { intensity: value });
         });
-        folder.add(layer, "rayBrightness", 0, 8, 0.01).name("ray brightness").onChange((value: number) => {
+        folder.add(layer, "rayBrightness", 0, 8, 0.01).name("brightness").onChange((value: number) => {
           updateLayerOption(layerKey, { rayBrightness: value });
         });
         folder.add(layer, "angle", -3.2, 0.8, 0.001).onChange((value: number) => {
@@ -218,7 +236,7 @@ export function GodraysCanvas() {
         folder.add(uiState, "originY", -2, 3, 0.01).onChange((value: number) => {
           updateLayerOption(layerKey, { origin: new Vector2(uiState.originX, value) });
         });
-        folder.add(layer, "raySpeed", 0.1, 3, 0.01).name("ray speed").onChange((value: number) => {
+        folder.add(layer, "raySpeed", 0.1, 3, 0.01).name("speed").onChange((value: number) => {
           updateLayerOption(layerKey, { raySpeed: value });
         });
         folder
@@ -228,7 +246,7 @@ export function GodraysCanvas() {
             "orbit clockwise": 2,
             "orbit counterclockwise": 3,
           })
-          .name("ray motion")
+          .name("motion")
           .onChange((value: number) => {
             updateLayerOption(layerKey, { rayMotion: Number(value) });
           });
@@ -238,28 +256,95 @@ export function GodraysCanvas() {
             "in front of model": 1,
             "behind and in front": 2,
           })
-          .name("ray depth")
+          .name("depth")
           .onChange((value: number) => {
             updateLayerOption(layerKey, { rayDepthMode: Number(value) });
           });
-        folder.add(layer, "raySpread", 0.2, 3, 0.01).name("ray spread").onChange((value: number) => {
+        folder.add(layer, "raySpread", 0.2, 3, 0.01).name("spread").onChange((value: number) => {
           updateLayerOption(layerKey, { raySpread: value });
         });
-        folder.add(layer, "rayLength", 0.05, 4, 0.01).name("ray length").onChange((value: number) => {
+        folder.add(layer, "rayLength", 0.05, 4, 0.01).name("length").onChange((value: number) => {
           updateLayerOption(layerKey, { rayLength: value });
         });
-        folder.add(layer, "rayThickness", 0.005, 4, 0.001).name("ray thickness").onChange((value: number) => {
+        folder.add(layer, "rayThickness", 0.005, 4, 0.001).name("thickness").onChange((value: number) => {
           updateLayerOption(layerKey, { rayThickness: value });
         });
-        folder.add(layer, "raySoftness", 0.25, 3, 0.01).name("ray softness").onChange((value: number) => {
+        folder.add(layer, "raySoftness", 0.25, 3, 0.01).name("softness").onChange((value: number) => {
           updateLayerOption(layerKey, { raySoftness: value });
         });
-        folder.add(layer, "rayCount", 1, 32, 1).name("ray count").onChange((value: number) => {
+        folder.add(layer, "rayCount", 1, 32, 1).name("count").onChange((value: number) => {
           updateLayerOption(layerKey, { rayCount: value });
         });
       };
 
       bindLayerControls("Light Rays", "backgroundLayer");
+
+      const backgroundFolder = gui.addFolder("Background");
+      backgroundFolder
+        .add(options.background, "transparent")
+        .name("transparent")
+        .onChange((value: boolean) => {
+          godrays.updateOptions({
+            background: {
+              transparent: value,
+            },
+          });
+        });
+
+      backgroundFolder
+        .addColor(options.background, "color")
+        .name("color")
+        .onChange((value: string) => {
+          godrays.updateOptions({
+            background: {
+              color: value,
+            },
+          });
+        });
+      backgroundFolder.close();
+
+      const modelState = options.model ?? { visible: true };
+      options.model = modelState;
+      const modelFolder = gui.addFolder("Model");
+      modelFolder.add(modelState, "visible").name("visible").onChange((value: boolean) => {
+        godrays.updateOptions({
+          model: {
+            visible: value,
+          },
+        });
+      });
+      modelFolder.close();
+
+      const textState = options.heroText ?? {
+        color: "#EB6137",
+        fontFamily: "Humane-Regular",
+        text: "CINEMATIC RAYS",
+        visible: true,
+      };
+      options.heroText = textState;
+      const textFolder = gui.addFolder("Text");
+      textFolder.add(textState, "visible").name("visible").onChange((value: boolean) => {
+        godrays.updateOptions({ heroText: { visible: value } });
+      });
+      textFolder.addColor(textState, "color").name("color").onChange((value: string) => {
+        godrays.updateOptions({ heroText: { color: value } });
+      });
+      textFolder.close();
+
+      const copyActions = {
+        copyPreset: () => {
+          const preset = serializeGodraysPreset(options);
+          void navigator.clipboard.writeText(preset).then(() => {
+            copyController.name("Copied!");
+            window.setTimeout(() => {
+              copyController.name("Copy preset");
+            }, 1500);
+          });
+        },
+      };
+      const copyController = gui.add(copyActions, "copyPreset").name("Copy preset");
+
+      makeGuiDraggable(gui);
     }
 
     const animate = () => {

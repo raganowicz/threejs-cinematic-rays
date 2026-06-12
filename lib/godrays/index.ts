@@ -9,3 +9,4 @@ export {
   type GodraysOptionsPatch,
   type GodraysSceneOptions,
 } from "./types";
+export { serializeGodraysPreset } from "./serializePreset";
