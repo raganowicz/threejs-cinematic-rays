@@ -1,6 +1,7 @@
 <video src="./public/screenshots/video-hero.mp4" autoplay loop muted playsinline width="100%"></video>
 
 # Three.js Cinematic Rays
+
 Stylized god rays for Three.js — pure `three`, no React Three Fiber.
 
 ```bash
@@ -14,24 +15,9 @@ pnpm dev
 
 ## Screenshots
 
-Drop PNG, GIF, or MP4 files into `public/screenshots/`. Hero video: `video-hero.mp4`.
-
-| Preset | File | Notes |
+| | | |
 | --- | --- | --- |
-| Hero | `video-hero.mp4` | Autoplay loop at top of README |
-| Cinematic (default) | `preset-cinematic.png` | Still frame |
-| Soft window light | `preset-soft.png` | Higher softness, fewer rays |
-| Pulse reveal | `preset-pulse.gif` or `preset-pulse.mp4` | `rayPulse: true` |
-
-| Cinematic | Soft light | Pulse |
-| --- | --- | --- |
-| ![Cinematic preset](./public/screenshots/preset-cinematic.png) | ![Soft light preset](./public/screenshots/preset-soft.png) | ![Pulse preset](./public/screenshots/preset-pulse.gif) |
-
-For video, replace the last cell with:
-
-```html
-<video src="./public/screenshots/preset-pulse.mp4" autoplay loop muted playsinline width="100%"></video>
-```
+| ![Screenshot 1](./public/screenshots/screenshot_01.jpg) | ![Screenshot 2](./public/screenshots/screenshot_02.jpg) | ![Screenshot 3](./public/screenshots/screenshot_03.jpg) |
 
 ## Use in your project
 
