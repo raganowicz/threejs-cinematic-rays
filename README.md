@@ -11,7 +11,8 @@ pnpm dev
 
 ## Live demo
 
-**Demo:** [http://localhost:3000](http://localhost:3000) _(replace with your deployed URL)_
+- **[Demo](https://threejs-cinematic-rays.vercel.app/)**
+- **[Demo with debug](https://threejs-cinematic-rays.vercel.app/#debug)** — `lil-gui` + `stats.js`
 
 ## Screenshots
 
@@ -57,7 +58,8 @@ The live demo uses `lib/demo/` — that folder is **not** part of the copy-paste
 | `rayPulseStagger` | `number` | `0.45` | Phase offset between rays. |
 | `background.transparent` | `boolean` | `false` | Transparent canvas background. |
 | `background.color` | `string` | `"#0a0d15"` | Background color. |
-| `#debug` | URL hash | — | Enables `lil-gui` controls and `stats.js` panel. |
+
+> Pass `#debug` in the URL to enable `lil-gui` controls and `stats.js` panel.
 
 Each frame: `rays.update(delta)`. On resize: `rays.resize(camera, width, height)`.
 
