@@ -1,4 +1,4 @@
-<video src="./public/screenshots/video-hero.mp4" autoplay loop muted playsinline width="100%"></video>
+![Hero demo](./public/screenshots/hero.gif)
 
 # Three.js Cinematic Rays
 
@@ -15,9 +15,11 @@ pnpm dev
 
 ## Screenshots
 
-| | | |
-| --- | --- | --- |
-| ![Screenshot 1](./public/screenshots/screenshot_01.jpg) | ![Screenshot 2](./public/screenshots/screenshot_02.jpg) | ![Screenshot 3](./public/screenshots/screenshot_03.jpg) |
+![Screenshot 1](./public/screenshots/screenshot_01.jpg)
+
+![Screenshot 2](./public/screenshots/screenshot_02.jpg)
+
+![Screenshot 3](./public/screenshots/screenshot_03.jpg)
 
 ## Use in your project
 
