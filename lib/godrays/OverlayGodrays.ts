@@ -94,11 +94,9 @@ void main() {
   float entryFade = smoothstep(-0.12, 0.25, depth);
   float depthFade = 1.0 - smoothstep(mix(0.65, 4.8, rayLengthT), mix(1.05, 6.8, rayLengthT), depth);
   float distanceFalloff = exp(-falloffDepth * mix(1.0, 0.035, rayLengthT));
-  float floorFade = mix(smoothstep(0.16, 0.56, uv.y), 1.0, smoothstep(0.18, 0.72, rayLengthT));
-  float topRightFade = smoothstep(-0.15, 0.78, uv.y) * smoothstep(-0.2, 0.85, uv.x);
 
-  float broadWash = exp(-abs(cross - 0.12) * 0.58);
-  broadWash *= entryFade * (0.35 + 0.65 * depthFade) * (0.42 + 0.58 * distanceFalloff) * (0.18 + 0.82 * floorFade);
+  float broadWash = exp(-abs(cross) * 0.58);
+  broadWash *= entryFade * (0.35 + 0.65 * depthFade) * (0.42 + 0.58 * distanceFalloff);
   broadWash *= 0.9 + 0.1 * sin(t * 0.18);
 
   float shafts = 0.0;
@@ -139,13 +137,12 @@ void main() {
     float pulse = 0.94 + 0.06 * sin(t * (0.08 + seed * 0.08) + fi * 1.9);
     float rayStrength = mix(0.1, 0.46, hash(fi * 5.33 + 3.3 + uRaySeed * 0.23));
 
-    shafts += beam * wrapFade * softness * localEntryFade * floorFade * rayFalloff * pulse * rayStrength;
+    shafts += beam * wrapFade * softness * localEntryFade * rayFalloff * pulse * rayStrength;
   }
 
   shafts = (shafts / (1.0 + shafts * 0.42)) * max(uRayBrightness, 0.0);
 
-  float surfaceGlow = topRightFade * exp(-falloffDepth * 0.62) * 0.08;
-  float atmosphere = broadWash * 0.12 + shafts * 0.2 + surfaceGlow;
+  float atmosphere = broadWash * 0.12 + shafts * 0.2;
   float bloom = pow(clamp01(broadWash * 0.48 + shafts * 0.4), 1.38) * 0.17;
   float totalLight = (atmosphere + bloom) * uIntensity;
 

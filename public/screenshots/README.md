@@ -1,5 +1,6 @@
-Drop media here for the README:
+Media used in the README:
 
-- `preset-cinematic.png` — default / hero
-- `preset-soft.png` — soft window light look
-- `preset-pulse.gif` or `preset-pulse.mp4` — pulse reveal animation
+- `video-hero.mp4` — hero video at the top
+- `screenshot_01.jpg`
+- `screenshot_02.jpg`
+- `screenshot_03.jpg`

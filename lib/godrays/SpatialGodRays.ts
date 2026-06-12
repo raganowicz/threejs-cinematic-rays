@@ -79,7 +79,7 @@ float pulseReveal(float phase) {
 
 void main() {
   vec2 uv = (vUv - 0.5) * uSheetOverscan + 0.5;
-  float t = (uTime + uRaySeed * 0.37) * 0.62;
+  float t = (uTime + uRaySeed * 0.37) * 0.62 * uRaySpeed;
   float motionSign = (uRayMotion == 0 || uRayMotion == 3) ? 1.0 : -1.0;
 
   vec2 p = vec2((uv.x - 0.5) * uAspect, uv.y - 0.5);
@@ -99,11 +99,10 @@ void main() {
   float entryFade = smoothstep(-0.18, 0.38, depth);
   float depthFade = 1.0 - smoothstep(mix(1.2, 7.4, rayLengthT), mix(1.8, 10.2, rayLengthT), depth);
   float distanceFalloff = exp(-falloffDepth * mix(0.62, 0.025, rayLengthT));
-  float floorFade = mix(smoothstep(0.02, 0.42, uv.y), 1.0, smoothstep(0.18, 0.72, rayLengthT));
   float sourceFade = smoothstep(0.08, 0.42, sourceDistance);
 
-  float broadWash = exp(-abs(cross - 0.1) * 0.72);
-  broadWash *= entryFade * (0.34 + 0.66 * depthFade) * (0.5 + 0.5 * distanceFalloff) * (0.2 + 0.8 * floorFade);
+  float broadWash = exp(-abs(cross) * 0.72);
+  broadWash *= entryFade * (0.34 + 0.66 * depthFade) * (0.5 + 0.5 * distanceFalloff);
   broadWash *= 0.98 + 0.02 * sin(t * 0.12);
   broadWash *= pulseReveal(0.0);
 
@@ -159,7 +158,7 @@ void main() {
     float rayStrength = mix(0.22, 0.68, hash(fi * 5.33 + 3.3 + uRaySeed * 0.23));
 
     float rayReveal = pulseReveal(fi * uRayPulseStagger);
-    shafts += beam * wrapFade * softness * localEntryFade * sourceFade * floorFade * rayFalloff * pulse * rayStrength * rayReveal;
+    shafts += beam * wrapFade * softness * localEntryFade * sourceFade * rayFalloff * pulse * rayStrength * rayReveal;
   }
 
   shafts = (shafts / (1.0 + shafts * 0.52)) * max(uRayBrightness, 0.0);
@@ -202,9 +201,7 @@ export class SpatialGodRays {
   }
 
   update(delta: number): void {
-    const speed = this.sanitize(this.options.raySpeed, 0.62, 0, 10);
-
-    this.elapsedTime += delta * speed;
+    this.elapsedTime += delta;
 
     for (const material of this.materials) {
       material.uniforms.uTime.value = this.elapsedTime;

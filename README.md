@@ -1,4 +1,4 @@
-![Three.js Cinematic Rays — cinematic preset](./public/screenshots/preset-cinematic.png)
+<video src="./public/screenshots/video-hero.mp4" autoplay loop muted playsinline width="100%"></video>
 
 # Three.js Cinematic Rays
 
@@ -15,23 +15,9 @@ pnpm dev
 
 ## Screenshots
 
-Drop PNG, GIF, or MP4 files into `public/screenshots/`. Suggested presets:
-
-| Preset | File | Notes |
+| | | |
 | --- | --- | --- |
-| Cinematic (default) | `preset-cinematic.png` | Hero image above |
-| Soft window light | `preset-soft.png` | Higher softness, fewer rays |
-| Pulse reveal | `preset-pulse.gif` or `preset-pulse.mp4` | `rayPulse: true` |
-
-| Cinematic | Soft light | Pulse |
-| --- | --- | --- |
-| ![Cinematic preset](./public/screenshots/preset-cinematic.png) | ![Soft light preset](./public/screenshots/preset-soft.png) | ![Pulse preset](./public/screenshots/preset-pulse.gif) |
-
-For video, replace the last cell with:
-
-```html
-<video src="./public/screenshots/preset-pulse.mp4" autoplay loop muted playsinline width="100%"></video>
-```
+| ![Screenshot 1](./public/screenshots/screenshot_01.jpg) | ![Screenshot 2](./public/screenshots/screenshot_02.jpg) | ![Screenshot 3](./public/screenshots/screenshot_03.jpg) |
 
 ## Use in your project
 
@@ -49,11 +35,11 @@ The live demo uses `lib/demo/` — that folder is **not** part of the copy-paste
 | `color` | `Vector3` | `(0.612, 0.639, 0.651)` | Ray color. |
 | `opacity` | `number` | `0.58` | Layer alpha. |
 | `intensity` | `number` | `0.75` | Overall light contribution. |
-| `angle` | `number` | `-2.3` | Main ray direction in radians. |
-| `origin` | `Vector2` | `(1.48, 1.86)` | Ray source in normalized screen coords. |
+| `angle` | `number` | `-2.3` | Main ray direction in radians (`-π..π`, full 360°). |
+| `origin` | `Vector2` | `(1.48, 1.86)` | Ray source in normalized screen coords (can be off-screen). |
 | `z` | `number` | `-1.8` | Back ray sheet depth. |
 | `frontZ` | `number` | `0.45` | Front ray sheet depth. |
-| `raySpeed` | `number` | `0.62` | Animation speed. |
+| `raySpeed` | `number` | `0.62` | Motion animation speed. Set to `0` to freeze lane drift and orbit. Pulse uses `rayPulseSpeed` separately. |
 | `rayMotion` | `0 \| 1 \| 2 \| 3` | `0` | `0` top→bottom, `1` bottom→top, `2` orbit CW, `3` orbit CCW. |
 | `rayDepthMode` | `0 \| 1 \| 2` | `2` | `0` behind model, `1` in front, `2` both. |
 | `raySpread` | `number` | `0.82` | Distance between ray lanes. |
