@@ -11,7 +11,8 @@ pnpm dev
 
 ## Live demo
 
-**Demo:** [http://localhost:3000](http://localhost:3000) _(replace with your deployed URL)_
+- **Demo:** [threejs-cinematic-rays.vercel.app](https://threejs-cinematic-rays-l2jmbtlso-piotrraganowiczs-projects.vercel.app)
+- **Demo with debug:** [threejs-cinematic-rays.vercel.app/#debug](https://threejs-cinematic-rays-l2jmbtlso-piotrraganowiczs-projects.vercel.app/#debug)
 
 ## Screenshots
 
