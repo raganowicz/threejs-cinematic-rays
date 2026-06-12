@@ -235,7 +235,7 @@ export function GodraysCanvas() {
         folder.add(layer, "rayBrightness", 0, 8, 0.01).name("brightness").onChange((value: number) => {
           updateLayerOption("backgroundLayer", { rayBrightness: value });
         });
-        folder.add(layer, "angle", -3.2, 0.8, 0.001).onChange((value: number) => {
+        folder.add(layer, "angle", -Math.PI, Math.PI, 0.001).onChange((value: number) => {
           updateLayerOption("backgroundLayer", { angle: value });
         });
         folder.add(layer, "z", -6, 2, 0.01).name("back z").onChange((value: number) => {
@@ -244,13 +244,13 @@ export function GodraysCanvas() {
         folder.add(layer, "frontZ", -2, 4, 0.01).name("front z").onChange((value: number) => {
           updateLayerOption("backgroundLayer", { frontZ: value });
         });
-        folder.add(uiState, "originX", -2, 3, 0.01).onChange((value: number) => {
+        folder.add(uiState, "originX", -2, 4, 0.01).onChange((value: number) => {
           updateLayerOption("backgroundLayer", { origin: new Vector2(value, uiState.originY) });
         });
-        folder.add(uiState, "originY", -2, 3, 0.01).onChange((value: number) => {
+        folder.add(uiState, "originY", -2, 4, 0.01).onChange((value: number) => {
           updateLayerOption("backgroundLayer", { origin: new Vector2(uiState.originX, value) });
         });
-        folder.add(layer, "raySpeed", 0.1, 3, 0.01).name("speed").onChange((value: number) => {
+        folder.add(layer, "raySpeed", 0, 3, 0.01).name("speed").onChange((value: number) => {
           updateLayerOption("backgroundLayer", { raySpeed: value });
         });
         folder
