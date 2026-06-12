@@ -38,6 +38,10 @@ export interface GodRaysOptions {
   raySoftness?: number;
   rayCount?: number;
   raySeed?: number;
+  rayPulse?: boolean;
+  rayPulseSpeed?: number;
+  rayPulseAmount?: number;
+  rayPulseStagger?: number;
 }
 
 export interface GodraysSceneOptions {

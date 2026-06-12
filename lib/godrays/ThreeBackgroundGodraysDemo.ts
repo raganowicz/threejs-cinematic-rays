@@ -72,6 +72,10 @@ uniform float uRayThickness;
 uniform float uRaySoftness;
 uniform int uRayCount;
 uniform float uRaySeed;
+uniform float uRayPulse;
+uniform float uRayPulseSpeed;
+uniform float uRayPulseAmount;
+uniform float uRayPulseStagger;
 uniform vec2 uOrigin;
 uniform vec3 uColor;
 uniform vec3 uBgColor;
@@ -90,6 +94,15 @@ float angularDistance(float a, float b) {
 
 float dither(vec2 p) {
   return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
+}
+
+float pulseReveal(float phase) {
+  if (uRayPulse < 0.5) {
+    return 1.0;
+  }
+
+  float wave = 0.5 + 0.5 * sin((uTime + uRaySeed * 0.37) * 0.62 * uRayPulseSpeed + phase);
+  return mix(1.0, smoothstep(0.06, 0.94, wave), uRayPulseAmount);
 }
 
 void main() {
@@ -120,6 +133,7 @@ void main() {
   float broadWash = exp(-abs(cross - 0.1) * 0.72);
   broadWash *= entryFade * (0.34 + 0.66 * depthFade) * (0.5 + 0.5 * distanceFalloff) * (0.2 + 0.8 * floorFade);
   broadWash *= 0.98 + 0.02 * sin(t * 0.12);
+  broadWash *= pulseReveal(0.0);
 
   float shafts = 0.0;
   float rayCountF = max(float(uRayCount), 1.0);
@@ -172,7 +186,8 @@ void main() {
     float pulse = 0.98 + 0.02 * sin(t * (0.05 + seed * 0.05) + fi * 1.9);
     float rayStrength = mix(0.22, 0.68, hash(fi * 5.33 + 3.3 + uRaySeed * 0.23));
 
-    shafts += beam * wrapFade * softness * localEntryFade * sourceFade * floorFade * rayFalloff * pulse * rayStrength;
+    float rayReveal = pulseReveal(fi * uRayPulseStagger);
+    shafts += beam * wrapFade * softness * localEntryFade * sourceFade * floorFade * rayFalloff * pulse * rayStrength * rayReveal;
   }
 
   shafts = (shafts / (1.0 + shafts * 0.52)) * max(uRayBrightness, 0.0);
@@ -279,6 +294,10 @@ export class SpatialGodRays {
       material.uniforms.uRayThickness.value = this.sanitize(this.options.rayThickness, 0.32, 0.005, 10);
       material.uniforms.uRaySoftness.value = this.sanitize(this.options.raySoftness, 1, 0.25, 3);
       material.uniforms.uRayCount.value = rayCounts[index] ?? 0;
+      material.uniforms.uRayPulse.value = this.options.rayPulse ? 1 : 0;
+      material.uniforms.uRayPulseSpeed.value = this.sanitize(this.options.rayPulseSpeed, 0.35, 0.05, 3);
+      material.uniforms.uRayPulseAmount.value = this.sanitize(this.options.rayPulseAmount, 1, 0, 1);
+      material.uniforms.uRayPulseStagger.value = this.sanitize(this.options.rayPulseStagger, 0.45, 0, 2);
       material.uniforms.uOrigin.value.copy(origin);
       material.uniforms.uColor.value.setRGB(color.x, color.y, color.z);
       material.uniforms.uAspect.value = this.lastAspect;
@@ -354,6 +373,10 @@ export class SpatialGodRays {
         uRaySoftness: { value: this.options.raySoftness ?? 1 },
         uRayCount: { value: Math.floor(this.options.rayCount ?? 8) },
         uRaySeed: { value: 17.13 + seedOffset },
+        uRayPulse: { value: this.options.rayPulse ? 1 : 0 },
+        uRayPulseSpeed: { value: this.options.rayPulseSpeed ?? 0.35 },
+        uRayPulseAmount: { value: this.options.rayPulseAmount ?? 1 },
+        uRayPulseStagger: { value: this.options.rayPulseStagger ?? 0.45 },
         uOrigin: { value: (this.options.origin ?? new Vector2(1.48, 1.86)).clone() },
         uColor: { value: new Color(color.x, color.y, color.z) },
         uBgColor: { value: new Vector3(0.118, 0.133, 0.149) },

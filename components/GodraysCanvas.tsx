@@ -205,6 +205,18 @@ export function GodraysCanvas() {
         if (typeof layer.rayCount !== "number") {
           layer.rayCount = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayCount ?? 8;
         }
+        if (typeof layer.rayPulse !== "boolean") {
+          layer.rayPulse = false;
+        }
+        if (typeof layer.rayPulseSpeed !== "number") {
+          layer.rayPulseSpeed = 0.35;
+        }
+        if (typeof layer.rayPulseAmount !== "number") {
+          layer.rayPulseAmount = 1;
+        }
+        if (typeof layer.rayPulseStagger !== "number") {
+          layer.rayPulseStagger = 0.45;
+        }
 
         folder.add(layer, "visible").onChange((value: boolean) => {
           updateLayerOption(layerKey, { visible: value });
@@ -274,6 +286,18 @@ export function GodraysCanvas() {
         });
         folder.add(layer, "rayCount", 1, 32, 1).name("count").onChange((value: number) => {
           updateLayerOption(layerKey, { rayCount: value });
+        });
+        folder.add(layer, "rayPulse").name("pulse reveal").onChange((value: boolean) => {
+          updateLayerOption(layerKey, { rayPulse: value });
+        });
+        folder.add(layer, "rayPulseSpeed", 0.05, 3, 0.01).name("pulse speed").onChange((value: number) => {
+          updateLayerOption(layerKey, { rayPulseSpeed: value });
+        });
+        folder.add(layer, "rayPulseAmount", 0, 1, 0.01).name("pulse amount").onChange((value: number) => {
+          updateLayerOption(layerKey, { rayPulseAmount: value });
+        });
+        folder.add(layer, "rayPulseStagger", 0, 2, 0.01).name("pulse stagger").onChange((value: number) => {
+          updateLayerOption(layerKey, { rayPulseStagger: value });
         });
       };
 

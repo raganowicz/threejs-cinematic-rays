@@ -72,6 +72,18 @@ const formatLayer = (layer: GodRaysOptions, indent: string): string => {
   if (typeof layer.rayCount === "number") {
     lines.push(`${indent}rayCount: ${formatNumber(layer.rayCount)},`);
   }
+  if (typeof layer.rayPulse === "boolean") {
+    lines.push(`${indent}rayPulse: ${layer.rayPulse},`);
+  }
+  if (typeof layer.rayPulseSpeed === "number") {
+    lines.push(`${indent}rayPulseSpeed: ${formatNumber(layer.rayPulseSpeed)},`);
+  }
+  if (typeof layer.rayPulseAmount === "number") {
+    lines.push(`${indent}rayPulseAmount: ${formatNumber(layer.rayPulseAmount)},`);
+  }
+  if (typeof layer.rayPulseStagger === "number") {
+    lines.push(`${indent}rayPulseStagger: ${formatNumber(layer.rayPulseStagger)},`);
+  }
   if (typeof layer.raySeed === "number") {
     lines.push(`${indent}raySeed: ${formatNumber(layer.raySeed)},`);
   }
