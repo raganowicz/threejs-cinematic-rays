@@ -105,7 +105,7 @@ void main() {
   float pointAngle = atan(toPoint.y, toPoint.x);
   float sourceDistance = length(toPoint);
   float rayLength = max(uRayLength, 0.05);
-  float rayLengthT = clamp01((rayLength - 0.05) / 1.95);
+  float rayLengthT = clamp01((rayLength - 0.05) / 3.95);
 
   float depth = dot(toPoint, rayDir);
   float cross = dot(toPoint, rayNormal);
@@ -238,7 +238,7 @@ export class SpatialGodRays {
   }
 
   setVisible(visible: boolean): void {
-    const depthMode = this.options.rayDepthMode ?? 2;
+    const depthMode = Math.floor(this.sanitize(this.options.rayDepthMode, 2, 0, 2));
 
     this.sheets[0].visible = visible && depthMode !== 1;
     this.sheets[1].visible = visible && depthMode !== 0;
@@ -253,25 +253,32 @@ export class SpatialGodRays {
     const origin = this.options.origin ?? new Vector2(1.48, 1.86);
     const backZ = this.sanitize(this.options.z, -1.8, -10, 10);
     const frontZ = this.sanitize(this.options.frontZ, 0.45, -10, 10);
+    const depthMode = Math.floor(this.sanitize(this.options.rayDepthMode, 2, 0, 2));
+    const totalRayCount = Math.floor(this.sanitize(this.options.rayCount, 8, 1, 32));
+    const rayCounts = depthMode === 0
+      ? [totalRayCount, 0]
+      : depthMode === 1
+        ? [0, totalRayCount]
+        : [Math.ceil(totalRayCount / 2), Math.floor(totalRayCount / 2)];
 
     this.sheets[0].position.z = backZ;
     this.sheets[0].renderOrder = backZ < 0 ? 0 : 2;
     this.sheets[1].position.z = frontZ;
     this.sheets[1].renderOrder = frontZ < 0 ? 0 : 2;
 
-    for (const material of this.materials) {
+    for (const [index, material] of this.materials.entries()) {
       material.uniforms.uIntensity.value = this.sanitize(this.options.intensity, 0.75, 0, 10);
       material.uniforms.uOpacity.value = this.sanitize(this.options.opacity, 0.58, 0, 1);
       material.uniforms.uAngle.value = this.sanitize(this.options.angle, -2.3, -Math.PI * 2, Math.PI * 2);
       material.uniforms.uRaySpeed.value = this.sanitize(this.options.raySpeed, 0.62, 0, 10);
       material.uniforms.uRayDirection.value = this.options.rayDirection ?? -1;
-      material.uniforms.uRayMotion.value = this.options.rayMotion ?? 2;
+      material.uniforms.uRayMotion.value = this.options.rayMotion ?? 0;
       material.uniforms.uRaySpread.value = this.sanitize(this.options.raySpread, 1, 0, 10);
       material.uniforms.uRayLength.value = this.sanitize(this.options.rayLength, 1.4, 0.05, 4);
       material.uniforms.uRayBrightness.value = this.sanitize(this.options.rayBrightness, 1, 0, 8);
       material.uniforms.uRayThickness.value = this.sanitize(this.options.rayThickness, 0.32, 0.005, 10);
       material.uniforms.uRaySoftness.value = this.sanitize(this.options.raySoftness, 1, 0.25, 3);
-      material.uniforms.uRayCount.value = Math.floor(this.sanitize(this.options.rayCount, 10, 1, 32));
+      material.uniforms.uRayCount.value = rayCounts[index] ?? 0;
       material.uniforms.uOrigin.value.copy(origin);
       material.uniforms.uColor.value.setRGB(color.x, color.y, color.z);
       material.uniforms.uAspect.value = this.lastAspect;
@@ -339,13 +346,13 @@ export class SpatialGodRays {
         uAngle: { value: this.options.angle ?? -2.3 },
         uRaySpeed: { value: this.options.raySpeed ?? 0.62 },
         uRayDirection: { value: this.options.rayDirection ?? -1 },
-        uRayMotion: { value: this.options.rayMotion ?? 2 },
+        uRayMotion: { value: this.options.rayMotion ?? 0 },
         uRaySpread: { value: this.options.raySpread ?? 1 },
         uRayLength: { value: this.options.rayLength ?? 1.4 },
         uRayBrightness: { value: this.options.rayBrightness ?? 1 },
         uRayThickness: { value: this.options.rayThickness ?? 0.32 },
         uRaySoftness: { value: this.options.raySoftness ?? 1 },
-        uRayCount: { value: Math.floor(this.options.rayCount ?? 10) },
+        uRayCount: { value: Math.floor(this.options.rayCount ?? 8) },
         uRaySeed: { value: 17.13 + seedOffset },
         uOrigin: { value: (this.options.origin ?? new Vector2(1.48, 1.86)).clone() },
         uColor: { value: new Color(color.x, color.y, color.z) },

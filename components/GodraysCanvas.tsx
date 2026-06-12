@@ -164,7 +164,7 @@ export function GodraysCanvas() {
           layer.rayDirection = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayDirection ?? -1;
         }
         if (typeof layer.rayMotion !== "number") {
-          layer.rayMotion = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayMotion ?? 2;
+          layer.rayMotion = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayMotion ?? 0;
         }
         if (typeof layer.rayDepthMode !== "number") {
           layer.rayDepthMode = DEFAULT_GODRAYS_OPTIONS.backgroundLayer.rayDepthMode ?? 2;
