@@ -101,8 +101,11 @@ export const serializeGodraysPreset = (options: GodraysSceneOptions): string => 
     `    color: ${formatPrimitive(options.background.color)},`,
     "  },",
     `  backgroundLayer: ${formatLayer(options.backgroundLayer, "  ")},`,
-    `  foregroundLayer: ${formatLayer(options.foregroundLayer, "  ")},`,
   ];
+
+  if (options.foregroundLayer) {
+    lines.push(`  foregroundLayer: ${formatLayer(options.foregroundLayer, "  ")},`);
+  }
 
   if (options.model) {
     lines.push("  model: {");
